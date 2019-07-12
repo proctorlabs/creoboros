@@ -19,3 +19,11 @@ impl From<std::io::Error> for AppError {
         }
     }
 }
+
+impl From<serde_yaml::Error> for AppError {
+    fn from(src: serde_yaml::Error) -> AppError {
+        AppError::Critical {
+            message: format!("Could not parse YAML!\n{:?}", src),
+        }
+    }
+}

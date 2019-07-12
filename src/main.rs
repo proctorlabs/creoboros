@@ -1,10 +1,11 @@
 mod agents;
+mod args;
 mod config;
 mod error;
 mod prelude;
 mod runtime;
 
-use config::Args;
+use args::Args;
 use prelude::*;
 use runtime::Boomslang;
 
@@ -17,6 +18,15 @@ fn main() -> Result<()> {
         message: format!("Failed to initialize logging!\n{:?}", e),
     })?;
     let app = Boomslang::new()?;
-    app.run(Agent::executor(args.script))?;
+    let f = std::fs::File::open(args.config)?;
+    let config: config::BaseConfig = serde_yaml::from_reader(f)?;
+    let agents: Vec<Agent> = config
+        .agent
+        .iter()
+        .map(|c| Agent::executor(c.command.clone()))
+        .collect();
+    for agent in agents.into_iter() {
+        app.run(agent)?;
+    }
     app.start()
 }

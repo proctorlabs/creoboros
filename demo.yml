@@ -1,0 +1,4 @@
+---
+agent:
+  - command: 'echo Hello!'
+  - command: 'echo Hey!'
