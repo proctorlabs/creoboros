@@ -1,7 +1,16 @@
 ---
 first:
   type: exec
-  command: 'echo Hello! && sleep 5'
+  command: 'echo'
+  args: ['Hello!']
 second:
   type: exec
-  command: 'echo Hey!'
+  command: 'echo'
+  args: ['Hey!']
+third:
+  type: script
+  shell: /bin/bash
+  script: |
+    echo "boom!"
+    sleep 5
+    echo "moo!"

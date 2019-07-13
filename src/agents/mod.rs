@@ -9,8 +9,9 @@ macro_rules! impl_agent {
 
         impl Agent {
             $(
-                pub fn $maker($($argname: $argtype , )*) -> Self {
+                pub fn $maker(name: String, $($argname: $argtype , )*) -> Self {
                     Agent::$name($name{
+                        name,
                         $($argname , )*
                     })
                 }
@@ -28,6 +29,7 @@ macro_rules! impl_agent {
         $(
             #[derive(Debug, Default)]
             pub struct $name{
+                pub name: String,
                 $(pub $argname: $argtype , )*
             }
 
@@ -44,6 +46,6 @@ macro_rules! impl_agent {
 }
 
 impl_agent! {
-    Executor, executor => { path: String }
+    Executor, executor => { command: String, args: Vec<String> }
     Timer, _timer => { duration: Duration }
 }

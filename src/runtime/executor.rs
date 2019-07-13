@@ -5,9 +5,8 @@ use tokio_process::CommandExt;
 
 impl Boomslang {
     pub fn execute(&self, task: crate::agents::Executor) -> Result<()> {
-        let mut child = Command::new("/bin/sh")
-            .arg("-c")
-            .arg(&task.path)
+        let mut child = Command::new(task.command)
+            .args(task.args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

@@ -21,9 +21,9 @@ fn main() -> Result<()> {
     let f = std::fs::File::open(args.config)?;
     let config: config::BaseConfig = serde_yaml::from_reader(f)?;
     let agents: Vec<Agent> = config
-        .agent
+        .agents
         .into_iter()
-        .map(|(_, c)| c.into_agent())
+        .map(|(n, c)| c.into_agent(n))
         .collect();
     for agent in agents.into_iter() {
         app.run(agent)?;
