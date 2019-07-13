@@ -2,12 +2,14 @@ mod executor;
 mod signals;
 
 use crate::prelude::*;
+//use std::collections::HashMap;
 use std::sync::Mutex;
 use tokio::runtime::{Runtime, TaskExecutor};
 
 pub struct Boomslang {
     runtime: Mutex<Runtime>,
     executor: TaskExecutor,
+    //agents: Mutex<HashMap<String, Agent>>,
 }
 
 impl Boomslang {
@@ -26,8 +28,8 @@ impl Boomslang {
         let mut rt = self.runtime.lock().map_err(|e| Critical {
             message: format!("Failed to wait task due to runtime poisoning!\n{:?}", e),
         })?;
-        rt.block_on(future).map_err(|_| Critical {
-            message: "Unknown error occurred!".into(),
+        rt.block_on(future).map_err(|e| Critical {
+            message: format!("Unknown error: {:?}", e),
         })?;
         Ok(())
     }
@@ -40,6 +42,7 @@ impl Boomslang {
         Ok(Boomslang {
             runtime: Mutex::new(rt),
             executor,
+            //agents: Default::default(),
         })
     }
 

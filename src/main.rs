@@ -22,8 +22,8 @@ fn main() -> Result<()> {
     let config: config::BaseConfig = serde_yaml::from_reader(f)?;
     let agents: Vec<Agent> = config
         .agent
-        .iter()
-        .map(|c| Agent::executor(c.command.clone()))
+        .into_iter()
+        .map(|(_, c)| c.into_agent())
         .collect();
     for agent in agents.into_iter() {
         app.run(agent)?;

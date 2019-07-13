@@ -1,4 +1,7 @@
 ---
-agent:
-  - command: 'echo Hello!'
-  - command: 'echo Hey!'
+first:
+  type: exec
+  command: 'echo Hello! && sleep 5'
+second:
+  type: exec
+  command: 'echo Hey!'
