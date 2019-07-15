@@ -1,4 +1,18 @@
+use crate::prelude::*;
 use std::time::Duration;
+
+macro_rules! spawn {
+    ($to_spawn:expr) => {{
+        let spawnable: Spawnable = Box::new($to_spawn.into_future().map(|_| ()).map_err(|_| ()));
+        crate::runtime::BOOMSLANG.spawn(spawnable)
+    }};
+}
+
+mod executor;
+
+pub trait RunnableAgent {
+    fn execute(self) -> Result<()>;
+}
 
 macro_rules! impl_agent {
     ($($name:ident, $maker:ident => { $($argname:ident : $argtype:ty),* })+) => {
@@ -16,6 +30,14 @@ macro_rules! impl_agent {
                     })
                 }
             )*
+        }
+
+        impl RunnableAgent for Agent {
+            fn execute(self) -> Result<()> {
+                match self {
+                    $(Agent::$name(inner) => inner.execute(),)*
+                }
+            }
         }
 
         $(
@@ -43,6 +65,12 @@ macro_rules! impl_agent {
             }
         )*
     };
+}
+
+impl RunnableAgent for Timer {
+    fn execute(self) -> Result<()> {
+        unimplemented!();
+    }
 }
 
 impl_agent! {

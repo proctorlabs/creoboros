@@ -4,6 +4,7 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Boomslang", rename_all = "kebab_case")]
 pub struct Args {
+    /// Config file to load
     #[structopt(
         short,
         long,
@@ -12,11 +13,15 @@ pub struct Args {
     )]
     pub config: PathBuf,
 
-    /// Filter to apply to input files
+    /// Inline configuration
+    #[structopt(long, env = "INIT_YAML", help = "Inline YAML configuration")]
+    pub inline: Option<String>,
+
+    /// Console log level
     #[structopt(short, long, help = "Logging level to use", default_value = "info")]
     pub log_level: log::Level,
 
-    /// The command to run
+    /// Operation mode
     #[structopt(subcommand)]
     pub command: Option<Command>,
 }

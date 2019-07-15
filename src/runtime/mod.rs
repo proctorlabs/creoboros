@@ -1,24 +1,60 @@
-mod executor;
-mod signals;
-
-use crate::prelude::*;
 //use std::collections::HashMap;
+use crate::prelude::*;
+pub use message::{Message, Message::*};
 use std::sync::Mutex;
 use tokio::runtime::{Runtime, TaskExecutor};
+use tokio::sync::mpsc::*;
+
+lazy_static! {
+    pub static ref BOOMSLANG: Boomslang = {
+        let rt = Runtime::new().map_err(|e| Critical {
+            message: format!("Failed to start runtime!\n{:?}", e),
+        }).unwrap();
+        let executor = rt.executor();
+        let chan = unbounded_channel();
+        let msg_proc = chan
+            .1
+            .for_each(|m: Message| {
+                match m {
+                    Log { log } => info!("{}", log),
+                };
+                Ok(())
+            })
+            .map(|_| ())
+            .map_err(|_| ());
+        executor.spawn(msg_proc);
+        Boomslang {
+            runtime: Mutex::new(rt),
+            executor,
+            //agents: Default::default(),
+            sender: chan.0,
+        }
+    };
+}
+
+pub type Spawnable = Box<Future<Item = (), Error = ()> + Send>;
+
+mod message;
+mod signals;
 
 pub struct Boomslang {
     runtime: Mutex<Runtime>,
     executor: TaskExecutor,
     //agents: Mutex<HashMap<String, Agent>>,
+    sender: UnboundedSender<Message>,
 }
 
 impl Boomslang {
-    fn spawn<F>(&self, future: F) -> Result<()>
+    pub fn spawn<F>(&self, future: F) -> Result<()>
     where
         F: Future<Item = (), Error = ()> + Send + 'static,
     {
         self.executor.spawn(future);
         Ok(())
+    }
+
+    pub fn sender(&self) -> UnboundedSender<Message> {
+        self.sender.clone()
     }
 
     fn wait<F>(&self, future: F) -> Result<()>
@@ -34,32 +70,11 @@ impl Boomslang {
         Ok(())
     }
 
-    pub fn new() -> Result<Boomslang> {
-        let rt = Runtime::new().map_err(|e| Critical {
-            message: format!("Failed to start runtime!\n{:?}", e),
-        })?;
-        let executor = rt.executor();
-        Ok(Boomslang {
-            runtime: Mutex::new(rt),
-            executor,
-            //agents: Default::default(),
-        })
-    }
-
     pub fn run(&self, agent: Agent) -> Result<()> {
-        match agent {
-            Agent::Executor(executor) => self.execute(executor)?,
-            _ => {
-                return Err(Critical {
-                    message: "Attempted to run unimplemented agent type!".into(),
-                })
-            }
-        }
-        Ok(())
+        agent.execute()
     }
 
     pub fn start(&self) -> Result<()> {
-        self.add_signal_hooks()?;
-        Ok(())
+        self.add_signal_hooks()
     }
 }
