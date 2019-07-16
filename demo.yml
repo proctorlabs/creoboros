@@ -15,3 +15,6 @@ agents:
       echo "boom!"
       sleep 60
       echo "moo!"
+  fourth:
+    type: timer
+    interval: "500ms"

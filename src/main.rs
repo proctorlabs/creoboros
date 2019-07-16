@@ -1,3 +1,12 @@
+#[macro_use]
+extern crate lazy_static;
+
+#[macro_use]
+extern crate log;
+
+#[macro_use]
+mod macros;
+
 mod agents;
 mod args;
 mod config;
@@ -8,12 +17,6 @@ mod runtime;
 use args::Args;
 use prelude::*;
 use runtime::BOOMSLANG;
-
-#[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
-extern crate log;
 
 fn main() -> Result<()> {
     let args = Args::new();

@@ -6,7 +6,9 @@
 		"--security-opt",
 		"seccomp=unconfined",
 		"--net",
-		"host"
+		"host",
+		"--mount",
+		"type=bind,source=${env:HOME}/.ssh,destination=/home/dev/.ssh,readonly"
 	],
 	"extensions": [
 		"rust-lang.rust",

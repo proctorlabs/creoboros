@@ -1,10 +1,11 @@
 use crate::agents::Agent;
 use crate::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::time::Duration;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct BaseConfig {
     pub agents: HashMap<String, AgentConfig>,
@@ -21,12 +22,22 @@ impl BaseConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "type")]
 pub enum AgentConfig {
-    Exec { command: String, args: Vec<String> },
-    Script { shell: String, script: String },
+    Exec {
+        command: String,
+        args: Vec<String>,
+    },
+    Script {
+        shell: String,
+        script: String,
+    },
+    Timer {
+        #[serde(with = "serde_humanize_rs")]
+        interval: Duration,
+    },
 }
 
 impl AgentConfig {
@@ -36,6 +47,7 @@ impl AgentConfig {
             AgentConfig::Script { shell, script } => {
                 Agent::executor(name, shell, vec!["-c".into(), script])
             }
+            AgentConfig::Timer { interval } => Agent::timer(name, interval),
         }
     }
 }
