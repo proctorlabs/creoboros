@@ -16,7 +16,7 @@ lazy_static! {
             .1
             .for_each(|m: Message| {
                 match m {
-                    Log { log } => info!("{}", log),
+                    Log { log } => info!("{}", serde_json::to_string(&log).unwrap_or_default()),
                 };
                 Ok(())
             })
@@ -32,7 +32,7 @@ lazy_static! {
     };
 }
 
-pub type Spawnable = Box<Future<Item = (), Error = ()> + Send>;
+pub type Spawnable = Box<dyn Future<Item = (), Error = ()> + Send>;
 
 mod message;
 mod signals;
@@ -41,7 +41,7 @@ pub struct Boomslang {
     runtime: Mutex<Runtime>,
     executor: TaskExecutor,
     //agents: Mutex<HashMap<String, Agent>>,
-    sender: UnboundedSender<Message>,
+    pub(crate) sender: UnboundedSender<Message>,
 }
 
 impl Boomslang {

@@ -1,3 +1,5 @@
+use unstructured::Document;
+
 pub enum Message {
-    Log { log: String },
+    Log { log: Document },
 }

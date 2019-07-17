@@ -2,17 +2,17 @@
 agents:
   first:
     type: exec
-    command: 'echo'
-    args: ['Hello!']
+    command: "echo"
+    args: ["Hello!"]
   second:
     type: exec
-    command: 'echo'
-    args: ['Hey!']
+    command: "echo"
+    args: ["Hey!"]
   third:
     type: script
     shell: /bin/bash
     script: |
-      echo "boom!"
+      echo "boom!" > /dev/stderr
       sleep 60
       echo "moo!"
   fourth:

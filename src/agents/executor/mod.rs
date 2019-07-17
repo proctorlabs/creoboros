@@ -5,7 +5,7 @@ use tokio_process::CommandExt;
 
 impl RunnableAgent for super::Executor {
     fn execute(self) -> Result<()> {
-        let mut sender;
+        let mut send_name;
         let mut child = Command::new(self.command)
             .args(self.args)
             .stdin(Stdio::null())
@@ -27,32 +27,27 @@ impl RunnableAgent for super::Executor {
             ),
         })?;
 
-        sender = BOOMSLANG.sender();
+        send_name = self.name.to_owned();
         spawn!(
             tokio::io::lines(BufReader::new(stdout)).for_each(move |line| {
-                sender
-                    .try_send(Log {
-                        log: line.to_string(),
-                    })
-                    .unwrap_or_default();
+                log_event!(send_name.clone(), "stdout" => line);
                 Ok(())
             })
         )?;
 
-        sender = BOOMSLANG.sender();
+        send_name = self.name.to_string();
         spawn!(
             tokio::io::lines(BufReader::new(stderr)).for_each(move |line| {
-                sender
-                    .try_send(Log {
-                        log: line.to_string(),
-                    })
-                    .unwrap_or_default();
+                log_event!(send_name.clone(), "stderr" => line);
                 Ok(())
             })
         )?;
 
+        send_name = self.name.to_string();
+        let send_name2 = send_name.to_string();
         spawn!(child
-            .map(|status| info!("Process exited with status: {}", status))
-            .map_err(|e| warn!("Failed to start process: {}", e)))
+            .map(move |status| log_event!(send_name.clone(), "process" => format!("Process exited with status: {}", status)))
+            .map_err(move |e| log_event!(send_name2.clone(), "process" => format!("Failed to start process: {}", e)))
+        )
     }
 }

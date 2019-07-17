@@ -43,7 +43,7 @@ macro_rules! impl_agent {
         )*
 
         $(
-            #[derive(Debug, Default)]
+            #[derive(Debug, Default, Clone)]
             pub struct $name{
                 pub name: String,
                 $(pub $argname: $argtype , )*
