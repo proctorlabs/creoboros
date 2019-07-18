@@ -1,15 +1,18 @@
-//use std::collections::HashMap;
+use crate::loggers::Logger;
 use crate::prelude::*;
 pub use message::{Message, Message::*};
+use std::collections::HashMap;
 use std::sync::Mutex;
 use tokio::runtime::{Runtime, TaskExecutor};
 use tokio::sync::mpsc::*;
 
 lazy_static! {
     pub static ref BOOMSLANG: Boomslang = {
-        let rt = Runtime::new().map_err(|e| Critical {
-            message: format!("Failed to start runtime!\n{:?}", e),
-        }).unwrap();
+        let rt = Runtime::new()
+            .map_err(|e| Critical {
+                message: format!("Failed to start runtime!\n{:?}", e),
+            })
+            .unwrap();
         let executor = rt.executor();
         let chan = unbounded_channel();
         let msg_proc = chan
@@ -26,7 +29,7 @@ lazy_static! {
         Boomslang {
             runtime: Mutex::new(rt),
             executor,
-            //agents: Default::default(),
+            loggers: Default::default(),
             sender: chan.0,
         }
     };
@@ -40,7 +43,7 @@ mod signals;
 pub struct Boomslang {
     runtime: Mutex<Runtime>,
     executor: TaskExecutor,
-    //agents: Mutex<HashMap<String, Agent>>,
+    loggers: Mutex<HashMap<String, Logger>>,
     pub(crate) sender: UnboundedSender<Message>,
 }
 
@@ -55,6 +58,12 @@ impl Boomslang {
 
     pub fn sender(&self) -> UnboundedSender<Message> {
         self.sender.clone()
+    }
+
+    pub fn register_logger(&self, logger: Logger) -> Result<()> {
+        let mut map = self.loggers.lock().unwrap();
+        map.insert(logger.get_name(), logger);
+        Ok(())
     }
 
     fn wait<F>(&self, future: F) -> Result<()>

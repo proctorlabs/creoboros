@@ -11,6 +11,7 @@ mod agents;
 mod args;
 mod config;
 mod error;
+mod loggers;
 mod prelude;
 mod runtime;
 
@@ -29,13 +30,11 @@ fn main() -> Result<()> {
         Some(s) => config::BaseConfig::load_str(&s)?,
     };
 
-    let agents: Vec<Agent> = config
-        .agents
-        .into_iter()
-        .map(|(n, c)| c.into_agent(n))
-        .collect();
+    for logger in config.loggers.into_iter().map(|(n, c)| c.into_logger(n)) {
+        BOOMSLANG.register_logger(logger)?;
+    }
 
-    for agent in agents.into_iter() {
+    for agent in config.agents.into_iter().map(|(n, c)| c.into_agent(n)) {
         BOOMSLANG.run(agent)?;
     }
     BOOMSLANG.start()

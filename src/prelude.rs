@@ -1,6 +1,6 @@
 pub use crate::{
     agents::*,
     error::{AppError::*, *},
-    runtime::{Spawnable, BOOMSLANG, Message::*},
+    runtime::{Message::*, Spawnable, BOOMSLANG},
 };
 pub use futures::{future::*, stream::Stream};

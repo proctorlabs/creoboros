@@ -1,4 +1,7 @@
----
+loggers:
+  main:
+    type: stdout
+
 agents:
   first:
     type: exec

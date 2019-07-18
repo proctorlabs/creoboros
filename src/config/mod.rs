@@ -1,4 +1,5 @@
 use crate::agents::Agent;
+use crate::loggers::Logger;
 use crate::prelude::*;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -8,6 +9,7 @@ use std::time::Duration;
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct BaseConfig {
+    pub loggers: HashMap<String, LoggerConfig>,
     pub agents: HashMap<String, AgentConfig>,
 }
 
@@ -19,6 +21,23 @@ impl BaseConfig {
 
     pub fn load_str(conf: &str) -> Result<Self> {
         Ok(serde_yaml::from_str(conf)?)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[serde(tag = "type")]
+pub enum LoggerConfig {
+    File { path: PathBuf },
+    Stdout,
+}
+
+impl LoggerConfig {
+    pub fn into_logger(self, name: String) -> Logger {
+        match self {
+            LoggerConfig::Stdout => Logger::stdout(name),
+            LoggerConfig::File { path } => Logger::file(name, path),
+        }
     }
 }
 
