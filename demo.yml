@@ -1,23 +1,23 @@
 loggers:
   main:
-    type: stdout
+    type: file
+    path: test.txt
 
 agents:
-  first:
-    type: exec
-    command: "echo"
-    args: ["Hello!"]
-  second:
+  "Greet and die immediately":
     type: exec
     command: "echo"
     args: ["Hey!"]
-  third:
+
+  "Dead in 60 seconds":
     type: script
     shell: /bin/bash
     script: |
-      echo "boom!" > /dev/stderr
+      echo "I started"
       sleep 60
-      echo "moo!"
-  fourth:
+      echo "Boom! I died." > /dev/stderr
+
+  "Timer Interval":
+    logger: main
     type: timer
-    interval: "500ms"
+    interval: "5000ms"

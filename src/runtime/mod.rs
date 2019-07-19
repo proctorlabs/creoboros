@@ -1,8 +1,8 @@
-use crate::loggers::Logger;
+use crate::loggers::*;
 use crate::prelude::*;
 pub use message::{Message, Message::*};
+use parking_lot::Mutex;
 use std::collections::HashMap;
-use std::sync::Mutex;
 use tokio::runtime::{Runtime, TaskExecutor};
 use tokio::sync::mpsc::*;
 
@@ -18,9 +18,7 @@ lazy_static! {
         let msg_proc = chan
             .1
             .for_each(|m: Message| {
-                match m {
-                    Log { log } => info!("{}", serde_json::to_string(&log).unwrap_or_default()),
-                };
+                BOOMSLANG.loggers.lock().get("default").unwrap().send(m);
                 Ok(())
             })
             .map(|_| ())
@@ -30,7 +28,8 @@ lazy_static! {
             runtime: Mutex::new(rt),
             executor,
             loggers: Default::default(),
-            sender: chan.0,
+            agents: Default::default(),
+            //sender: chan.0,
         }
     };
 }
@@ -44,7 +43,8 @@ pub struct Boomslang {
     runtime: Mutex<Runtime>,
     executor: TaskExecutor,
     loggers: Mutex<HashMap<String, Logger>>,
-    pub(crate) sender: UnboundedSender<Message>,
+    agents: Mutex<HashMap<String, Agent>>,
+    //pub(crate) sender: UnboundedSender<Message>,
 }
 
 impl Boomslang {
@@ -56,23 +56,22 @@ impl Boomslang {
         Ok(())
     }
 
-    pub fn sender(&self) -> UnboundedSender<Message> {
-        self.sender.clone()
-    }
-
     pub fn register_logger(&self, logger: Logger) -> Result<()> {
-        let mut map = self.loggers.lock().unwrap();
+        let mut map = self.loggers.lock();
+        logger.init()?;
         map.insert(logger.get_name(), logger);
         Ok(())
+    }
+
+    pub fn get_logger(&self, logger: &str) -> Option<Logger> {
+        self.loggers.lock().get(logger).cloned()
     }
 
     fn wait<F>(&self, future: F) -> Result<()>
     where
         F: Future<Item = (), Error = ()> + Send + 'static,
     {
-        let mut rt = self.runtime.lock().map_err(|e| Critical {
-            message: format!("Failed to wait task due to runtime poisoning!\n{:?}", e),
-        })?;
+        let mut rt = self.runtime.lock();
         rt.block_on(future).map_err(|e| Critical {
             message: format!("Unknown error: {:?}", e),
         })?;
@@ -80,7 +79,10 @@ impl Boomslang {
     }
 
     pub fn run(&self, agent: Agent) -> Result<()> {
-        agent.execute()
+        let mut map = self.agents.lock();
+        agent.execute()?;
+        map.insert(agent.get_name(), agent);
+        Ok(())
     }
 
     pub fn start(&self) -> Result<()> {

@@ -3,11 +3,11 @@ use std::io::BufReader;
 use std::process::{Command, Stdio};
 use tokio_process::CommandExt;
 
-impl RunnableAgent for super::Executor {
-    fn execute(self) -> Result<()> {
-        let mut send_name;
-        let mut child = Command::new(self.command)
-            .args(self.args)
+impl RunnableAgent for Arc<super::Executor> {
+    fn execute(&self) -> Result<()> {
+        let mut zelf = self.clone();
+        let mut child = Command::new(self.command.clone())
+            .args(self.args.clone())
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -27,27 +27,26 @@ impl RunnableAgent for super::Executor {
             ),
         })?;
 
-        send_name = self.name.to_owned();
         spawn!(
             tokio::io::lines(BufReader::new(stdout)).for_each(move |line| {
-                log_event!(send_name.clone(), "stdout" => line);
+                info!(target: &zelf.logger, "{}", line);
                 Ok(())
             })
         )?;
 
-        send_name = self.name.to_string();
+        zelf = self.clone();
         spawn!(
             tokio::io::lines(BufReader::new(stderr)).for_each(move |line| {
-                log_event!(send_name.clone(), "stderr" => line);
+                warn!(target: &zelf.logger, "{}", line);
                 Ok(())
             })
         )?;
 
-        send_name = self.name.to_string();
-        let send_name2 = send_name.to_string();
+        zelf = self.clone();
+        let zelf2 = self.clone();
         spawn!(child
-            .map(move |status| log_event!(send_name.clone(), "process" => format!("Process exited with status: {}", status)))
-            .map_err(move |e| log_event!(send_name2.clone(), "process" => format!("Failed to start process: {}", e)))
+            .map(move |status| info!(target: &zelf.logger, "Process exited with status: {}", status))
+            .map_err(move |e| warn!(target: &zelf2.logger, "Failed to start process: {}", e))
         )
     }
 }
