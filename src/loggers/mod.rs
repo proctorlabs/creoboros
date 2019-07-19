@@ -4,10 +4,8 @@ use parking_lot::Mutex;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::mpsc::*;
-pub use log_logger::init;
 
 mod file;
-mod log_logger;
 mod stdout;
 
 impl_module! {

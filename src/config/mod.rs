@@ -72,10 +72,7 @@ pub enum AgentConfig {
 }
 
 impl Builder<Vec<Logger>> for HashMap<String, LoggerConfig> {
-    fn build(mut self) -> Vec<Logger> {
-        if !self.contains_key("default") {
-            self.insert("default".into(), LoggerConfig::Stdout);
-        }
+    fn build(self) -> Vec<Logger> {
         self.into_iter()
             .map(|(n, c)| match c {
                 LoggerConfig::Stdout => Logger::stdout(n),

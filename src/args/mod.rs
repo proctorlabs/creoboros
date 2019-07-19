@@ -17,10 +17,6 @@ pub struct Args {
     #[structopt(long, env = "INIT_YAML", help = "Inline YAML configuration")]
     pub inline: Option<String>,
 
-    /// Console log level
-    #[structopt(short, long, help = "Logging level to use", default_value = "info")]
-    pub log_level: log::Level,
-
     /// Operation mode
     #[structopt(subcommand)]
     pub command: Option<Command>,

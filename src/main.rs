@@ -3,9 +3,6 @@
 extern crate lazy_static;
 
 #[macro_use]
-extern crate log;
-
-#[macro_use]
 mod macros;
 
 mod agents;
@@ -23,9 +20,6 @@ use runtime::BOOMSLANG;
 
 fn main() -> Result<()> {
     let args = Args::new();
-    loggers::init(args.log_level).map_err(|e| Critical {
-        message: format!("Failed to initialize logging!\n{:?}", e),
-    })?;
 
     let config = match args.inline {
         None => config::BaseConfig::load_file(args.config)?,
