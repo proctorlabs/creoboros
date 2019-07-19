@@ -29,15 +29,22 @@ macro_rules! warn {
 }
 
 macro_rules! log {
+    ($level:ident : $l:literal $( $key:ident : $val:expr ),* ) => {
+        log!($level : $l [] $( $key : $val ),* => "default" )
+    };
+    ($level:ident : $l:literal $( $key:ident : $val:expr ),* => $( $logger:tt )* ) => {
+        log!($level : $l [] $( $key : $val ),* => $( $logger )* )
+    };
     ($level:ident : $l:literal [ $($args:tt)* ] $( $key:ident : $val:expr ),* ) => {
         log!($level : $l [ $( $args )* ] $( $key : $val ),* => "default" )
     };
     ($level:ident : $l:literal [ $($args:tt)* ] $( $key:ident : $val:expr ),* => $( $logger:tt )* ) => {
         {
             let log_log = format!($l, $( $args )* );
-            let logger = crate::runtime::BOOMSLANG.get_logger($( $logger )*);
             $( let $key = $val.to_string(); )*
-            spawn!(lazy(|| {
+            let logger_name = $( $logger )* .to_owned();
+            spawn!(lazy(move || {
+                let logger = crate::runtime::BOOMSLANG.get_logger(&logger_name);
                 if let Some(l) = logger {
                     let mut log: std::collections::BTreeMap<unstructured::Document, unstructured::Document> = std::collections::BTreeMap::new();
                     log.insert("timestamp".into(), chrono::Local::now().to_rfc3339().into());
@@ -56,12 +63,6 @@ macro_rules! log {
                 Ok::<(), crate::error::AppError>(())
             })).unwrap_or_else(|_| println!("CRITICAL LOG FAILURE"));
         }
-    };
-    ($level:ident : $l:literal $( $key:ident : $val:expr ),* ) => {
-        log!($level : $l [] $( $key : $val ,)* => "default" )
-    };
-    ($level:ident : $l:literal $( $key:ident : $val:expr ),* => $( $logger:tt )* ) => {
-        log!($level : $l [] $( $key : $val ,)* => $( $logger )* )
     };
 }
 

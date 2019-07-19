@@ -29,7 +29,7 @@ impl RunnableAgent for Arc<super::Executor> {
 
         spawn!(
             tokio::io::lines(BufReader::new(stdout)).for_each(move |line| {
-                info!("{}" [&line] => &zelf.logger);
+                info!("{}" [&line] agent: zelf.name => zelf.logger);
                 Ok(())
             })
         )?;
@@ -37,7 +37,7 @@ impl RunnableAgent for Arc<super::Executor> {
         zelf = self.clone();
         spawn!(
             tokio::io::lines(BufReader::new(stderr)).for_each(move |line| {
-                warn!("{}" [&line] => &zelf.logger);
+                warn!("{}" [&line] agent: zelf.name => zelf.logger);
                 Ok(())
             })
         )?;
@@ -45,7 +45,7 @@ impl RunnableAgent for Arc<super::Executor> {
         zelf = self.clone();
         let zelf2 = self.clone();
         spawn!(child
-            .map(move |status| info!("Process exited with status: {}" [status] => &zelf.logger))
-            .map_err(move |e| warn!("Failed to start process: {}" [e] => &zelf2.logger)))
+            .map(move |status| info!("Process exited with status: {}" [status] agent: zelf.name, reason: status => zelf.logger))
+            .map_err(move |e| warn!("Failed to start process: {}" [e] agent: zelf2.name => zelf2.logger)))
     }
 }

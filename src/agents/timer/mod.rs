@@ -9,7 +9,7 @@ impl RunnableAgent for Arc<Timer> {
         let zelf = self.clone();
         spawn!(
             Interval::new(Instant::now() + self.interval, self.interval).for_each(move |_| {
-                info!("Timer event occurred" => &zelf.logger);
+                info!("Timer event occurred" agent: zelf.name => zelf.logger);
                 Ok(())
             })
         )

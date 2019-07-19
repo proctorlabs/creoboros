@@ -1,10 +1,10 @@
 loggers:
   main:
-    type: file
-    path: test.txt
+    type: stdout
 
 agents:
   "Greet and die immediately":
+    logger: main
     type: exec
     command: "echo"
     args: ["Hey!"]
