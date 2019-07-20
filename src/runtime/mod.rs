@@ -14,11 +14,10 @@ lazy_static! {
             })
             .unwrap();
         let executor = rt.executor();
-        let chan = unbounded_channel();
-        let msg_proc = chan
-            .1
+        let (_, receiver) = unbounded_channel();
+        let msg_proc = receiver
             .for_each(|m: Message| {
-                BOOMSLANG.loggers.lock().get("default").unwrap().send(m);
+                info!("Master received message {:?}"[m]);
                 Ok(())
             })
             .map(|_| ())
@@ -29,7 +28,6 @@ lazy_static! {
             executor,
             loggers: Default::default(),
             agents: Default::default(),
-            //sender: chan.0,
         }
     };
 }
@@ -44,7 +42,6 @@ pub struct Boomslang {
     executor: TaskExecutor,
     loggers: Mutex<HashMap<String, Logger>>,
     agents: Mutex<HashMap<String, Agent>>,
-    //pub(crate) sender: UnboundedSender<Message>,
 }
 
 impl Boomslang {

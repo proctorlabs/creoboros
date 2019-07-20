@@ -5,7 +5,6 @@ use tokio_process::CommandExt;
 
 impl RunnableAgent for Arc<super::Executor> {
     fn execute(&self) -> Result<()> {
-        let mut zelf = self.clone();
         let mut child = Command::new(self.command.clone())
             .args(self.args.clone())
             .stdin(Stdio::null())
@@ -27,25 +26,28 @@ impl RunnableAgent for Arc<super::Executor> {
             ),
         })?;
 
-        spawn!(
-            tokio::io::lines(BufReader::new(stdout)).for_each(move |line| {
-                info!("{}" [&line] agent: zelf.name => zelf.logger);
-                Ok(())
-            })
-        )?;
+        capture!(self:slf {
+            spawn!(
+                tokio::io::lines(BufReader::new(stdout)).for_each(move |line| {
+                    info!("{}" [&line] agent: slf.name => slf.logger);
+                    Ok(())
+                })
+            )?;
+        });
 
-        zelf = self.clone();
-        spawn!(
-            tokio::io::lines(BufReader::new(stderr)).for_each(move |line| {
-                warn!("{}" [&line] agent: zelf.name => zelf.logger);
-                Ok(())
-            })
-        )?;
+        capture!(self:slf {
+            spawn!(
+                tokio::io::lines(BufReader::new(stderr)).for_each(move |line| {
+                    warn!("{}" [&line] agent: slf.name => slf.logger);
+                    Ok(())
+                })
+            )?;
+        });
 
-        zelf = self.clone();
-        let zelf2 = self.clone();
-        spawn!(child
-            .map(move |status| info!("Process exited with status: {}" [status] agent: zelf.name, reason: status => zelf.logger))
-            .map_err(move |e| warn!("Failed to start process: {}" [e] agent: zelf2.name => zelf2.logger)))
+        capture!(self:slf1, self:slf2 {
+            spawn!(child
+                .map(move |status| info!("Process exited with status: {}" [status] agent: slf1.name, reason: status => slf1.logger))
+                .map_err(move |e| warn!("Failed to start process: {}" [e] agent: slf2.name => slf2.logger)))
+        })
     }
 }

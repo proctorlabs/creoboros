@@ -21,13 +21,16 @@ impl Logger {
     pub fn init(&self) -> Result<()> {
         for_match!(self: Logger [Stdout, File] |inner| (
             let receiver = inner.receiver.lock().take().ok_or_else(|| Critical { message: "Can only be initialized once!".into() })?;
-            let inner_send = inner.clone();
-            spawn!(
-                receiver.for_each(move |m: Message| {
-                    inner_send.log(m).unwrap_or_default();
-                    Ok(())
-                })
-            ))
-        )
+            capture!(inner:inner
+                {
+                    spawn!(
+                        receiver.for_each(move |m: Message| {
+                            inner.log(m).unwrap_or_default();
+                            Ok(())
+                        })
+                    )
+                }
+            )
+        ))
     }
 }

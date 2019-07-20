@@ -16,6 +16,17 @@ macro_rules! for_match {
     };
 }
 
+macro_rules! capture {
+    ($($cap:ident : $cap_name:ident),* { $($tail:tt)* }) => {
+        
+        {
+            $(let $cap_name = $cap.clone();)*
+            $( $tail )*
+        }
+        
+    };
+}
+
 macro_rules! info {
     ($($tt:tt)*) => {
         log!(INFO: $( $tt )*)
