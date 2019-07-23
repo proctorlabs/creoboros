@@ -3,7 +3,7 @@ use std::io::BufReader;
 use std::process::{Command, Stdio};
 use tokio_process::CommandExt;
 
-impl RunnableAgent for Arc<super::Executor> {
+impl RunnableAgent for Arc<super::Service> {
     fn execute(&self) -> Result<()> {
         let mut child = Command::new(self.command.clone())
             .args(self.args.clone())

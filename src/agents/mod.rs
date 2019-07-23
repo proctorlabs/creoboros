@@ -10,7 +10,7 @@ mod timer;
 
 impl_module! {
     Agent, RunnableAgent: {
-        Executor, executor => { command: String, args: Vec<String>, logger: String }
+        Service, service => { command: String, args: Vec<String>, logger: String }
         Timer, timer => { interval: Duration, logger: String }
     } => {
         execute() -> Result<()>

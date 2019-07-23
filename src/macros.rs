@@ -18,12 +18,10 @@ macro_rules! for_match {
 
 macro_rules! capture {
     ($($cap:ident : $cap_name:ident),* { $($tail:tt)* }) => {
-        
         {
             $(let $cap_name = $cap.clone();)*
             $( $tail )*
         }
-        
     };
 }
 
@@ -64,15 +62,10 @@ macro_rules! log {
                     $( log.insert(stringify!($key).into(), $key.into()); )*
                     l.send(crate::runtime::Message::Log { log: log.into() });
                 } else {
-                    println!(
-                        "{} |{:<4}|: {}",
-                        chrono::Local::now().format("%H:%M:%S.%3f"),
-                        stringify!($level),
-                        log_log
-                    );
+                    crate::loggers::Stdout::write(&log_log, stringify!($level));
                 }
                 Ok::<(), crate::error::AppError>(())
-            })).unwrap_or_else(|_| println!("CRITICAL LOG FAILURE"));
+            })).unwrap_or_else(|_| crate::loggers::Stdout::write("Critical log failure!", "CRIT"));
         }
     };
 }

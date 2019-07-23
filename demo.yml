@@ -1,6 +1,9 @@
 loggers:
   main:
     type: stdout
+  file:
+    type: file
+    path: test.txt
 
 agents:
   "Greet and die immediately":
@@ -18,6 +21,6 @@ agents:
       echo "Boom! I died." > /dev/stderr
 
   "Timer Interval":
-    logger: main
+    logger: file
     type: timer
     interval: "5000ms"

@@ -90,12 +90,12 @@ impl Builder<Vec<Agent>> for HashMap<String, AgentConfig> {
                     command,
                     args,
                     logger,
-                } => Agent::executor(n, command, args, logger),
+                } => Agent::service(n, command, args, logger),
                 AgentConfig::Script {
                     shell,
                     script,
                     logger,
-                } => Agent::executor(n, shell, vec!["-c".into(), script], logger),
+                } => Agent::service(n, shell, vec!["-c".into(), script], logger),
                 AgentConfig::Timer { interval, logger } => Agent::timer(n, interval, logger),
             })
             .collect()
