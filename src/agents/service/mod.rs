@@ -3,6 +3,10 @@ use std::io::BufReader;
 use std::process::{Command, Stdio};
 use tokio_process::CommandExt;
 
+use futures::*;
+use std::time::*;
+use tokio::timer::*;
+
 impl RunnableAgent for Arc<super::Service> {
     fn execute(&self) -> Result<()> {
         let mut child = Command::new(self.command.clone())
@@ -44,9 +48,14 @@ impl RunnableAgent for Arc<super::Service> {
             )?;
         });
 
-        capture!(self:slf1, self:slf2 {
+        capture!(self:slf1, self:slf2, self:slf3 {
             spawn!(child
-                .map(move |status| info!("Process exited with status: {}" [status] agent: slf1.name, reason: status => slf1.logger))
+                .map(move |status| {
+                    warn!("Process exited with status: {}" [status] agent: slf1.name, reason: status => slf1.logger);
+                    info!("Attempting to restart process in 5 seconds..." agent: slf1.name => slf1.logger);
+                    let delay = Delay::new(Instant::now() +  Duration::from_millis(5000));
+                    spawn!(delay.then(move |_| slf3.execute()))
+                })
                 .map_err(move |e| warn!("Failed to start process: {}" [e] agent: slf2.name => slf2.logger)))
         })
     }
