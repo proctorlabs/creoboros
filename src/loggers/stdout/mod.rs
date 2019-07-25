@@ -15,6 +15,7 @@ impl LoggerSink for Stdout {
     fn log(&self, m: Message) -> Result<()> {
         match m {
             Log { log } => Stdout::write(&log["log"].to_string(), &log["level"].to_string()),
+            Init => info!("Logger initialized!" logger: self.name => self.name),
         };
         Ok(())
     }

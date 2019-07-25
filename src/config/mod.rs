@@ -1,6 +1,7 @@
 use crate::agents::Agent;
 use crate::loggers::Logger;
 use crate::prelude::*;
+use parking_lot::Mutex;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -76,7 +77,7 @@ impl Builder<Vec<Logger>> for HashMap<String, LoggerConfig> {
         self.into_iter()
             .map(|(n, c)| match c {
                 LoggerConfig::Stdout => Logger::stdout(n),
-                LoggerConfig::File { path } => Logger::file(n, path),
+                LoggerConfig::File { path } => Logger::file(n, path, Mutex::new(None)),
             })
             .collect()
     }

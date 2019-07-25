@@ -8,8 +8,8 @@ impl Boomslang {
             Signals::new(&[SIGINT, SIGTERM, SIGQUIT])?
                 .into_async()?
                 .into_future()
-                .map(|sig| info!("{:?}"[sig.0] agent: "control"))
-                .map_err(|e| warn!("{}"[e.0] agent: "control")),
+                .map(|_| info!("Signal received! Shutting down..." agent: "master"))
+                .map_err(|e| warn!("{}"[e.0] agent: "master")),
         )
     }
 }

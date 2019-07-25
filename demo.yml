@@ -3,7 +3,7 @@ loggers:
     type: stdout
   file:
     type: file
-    path: test.txt
+    path: demo.log
 
 agents:
   "Greet and die immediately":
