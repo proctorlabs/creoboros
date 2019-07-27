@@ -52,9 +52,17 @@ impl RunnableAgent for Arc<super::Service> {
             spawn!(child
                 .map(move |status| {
                     warn!("Process exited with status: {}" [status] agent: slf1.name, reason: status => slf1.logger);
-                    info!("Attempting to restart process in 5 seconds..." agent: slf1.name => slf1.logger);
-                    let delay = Delay::new(Instant::now() +  Duration::from_millis(5000));
-                    spawn!(delay.then(move |_| slf3.execute()))
+                    match slf1.policy {
+                        Policy::Restart{delay} => {
+                            info!("Attempting to restart process in {} seconds..."[delay] agent: slf1.name => slf1.logger);
+                            let delay = Delay::new(Instant::now() +  Duration::from_millis(1000 * delay));
+                            spawn!(delay.then(move |_| slf3.execute()))
+                        }
+                        Policy::Nothing => {
+                            info!("Process exited, 'nothing' policy implies no action taken");
+                            Ok(())
+                        }
+                    }
                 })
                 .map_err(move |e| warn!("Failed to start process: {}" [e] agent: slf2.name => slf2.logger)))
         })

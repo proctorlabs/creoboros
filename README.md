@@ -1,3 +1,3 @@
 # Cerberus
 
-A lightweight process and task manager for docker containers.
+Cerberus is an 'init' for Docker that is lightweight and simple to use.

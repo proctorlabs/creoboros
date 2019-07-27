@@ -9,6 +9,9 @@ agents:
   "Greet and die immediately":
     logger: main
     type: exec
+    policy:
+      action: restart
+      delay: 1
     command: "echo"
     args: ["Hey!"]
 

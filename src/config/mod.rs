@@ -15,12 +15,35 @@ fn default_shell() -> String {
     "/bin/bash".to_string()
 }
 
+fn default_delay() -> u64 {
+    10
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct BaseConfig {
     #[serde(default)]
     pub loggers: HashMap<String, LoggerConfig>,
     pub agents: HashMap<String, AgentConfig>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[serde(tag = "action")]
+pub enum Policy {
+    Restart {
+        #[serde(default = "default_delay")]
+        delay: u64,
+    },
+    Nothing,
+}
+
+impl Default for Policy {
+    fn default() -> Self {
+        Policy::Restart {
+            delay: default_delay(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -41,6 +64,8 @@ pub enum AgentConfig {
         command: String,
         #[serde(default)]
         args: Vec<String>,
+        #[serde(default)]
+        policy: Policy,
     },
     Script {
         #[serde(default = "default_logger")]
@@ -48,6 +73,8 @@ pub enum AgentConfig {
         #[serde(default = "default_shell")]
         shell: String,
         script: String,
+        #[serde(default)]
+        policy: Policy,
     },
     Timer {
         #[serde(default = "default_logger")]
@@ -91,12 +118,14 @@ impl Builder<Vec<Agent>> for HashMap<String, AgentConfig> {
                     command,
                     args,
                     logger,
-                } => Agent::service(n, command, args, logger),
+                    policy,
+                } => Agent::service(n, command, args, logger, policy),
                 AgentConfig::Script {
                     shell,
                     script,
                     logger,
-                } => Agent::service(n, shell, vec!["-c".into(), script], logger),
+                    policy,
+                } => Agent::service(n, shell, vec!["-c".into(), script], logger, policy),
                 AgentConfig::Timer { interval, logger } => Agent::timer(n, interval, logger),
             })
             .collect()
