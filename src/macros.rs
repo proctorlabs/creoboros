@@ -1,7 +1,7 @@
 macro_rules! spawn {
     ($to_spawn:expr) => {{
         let spawnable: Spawnable = Box::new($to_spawn.into_future().map(|_| ()).map_err(|_| ()));
-        crate::runtime::BOOMSLANG.spawn(spawnable)
+        crate::runtime::CERBERUS.spawn(spawnable)
     }};
 }
 
@@ -53,7 +53,7 @@ macro_rules! log {
             $( let $key = $val.to_string(); )*
             let logger_name = $( $logger )* .to_owned();
             spawn!(lazy(move || {
-                let logger = crate::runtime::BOOMSLANG.get_logger(&logger_name);
+                let logger = crate::runtime::CERBERUS.get_logger(&logger_name);
                 if let Some(l) = logger {
                     let mut log: std::collections::BTreeMap<unstructured::Document, unstructured::Document> = std::collections::BTreeMap::new();
                     log.insert("timestamp".into(), chrono::Local::now().to_rfc3339().into());

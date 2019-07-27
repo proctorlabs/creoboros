@@ -7,7 +7,7 @@ use tokio::runtime::{Runtime, TaskExecutor};
 use tokio::sync::mpsc::*;
 
 lazy_static! {
-    pub static ref BOOMSLANG: Boomslang = {
+    pub static ref CERBERUS: Cerberus = {
         let rt = Runtime::new()
             .map_err(|e| Critical {
                 message: format!("Failed to start runtime!\n{:?}", e),
@@ -23,7 +23,7 @@ lazy_static! {
             .map(|_| ())
             .map_err(|_| ());
         executor.spawn(msg_proc);
-        Boomslang {
+        Cerberus {
             runtime: Mutex::new(rt),
             executor,
             loggers: Default::default(),
@@ -37,14 +37,14 @@ pub type Spawnable = Box<dyn Future<Item = (), Error = ()> + Send>;
 mod message;
 mod signals;
 
-pub struct Boomslang {
+pub struct Cerberus {
     runtime: Mutex<Runtime>,
     executor: TaskExecutor,
     loggers: Mutex<HashMap<String, Logger>>,
     agents: Mutex<HashMap<String, Agent>>,
 }
 
-impl Boomslang {
+impl Cerberus {
     pub fn spawn<F>(&self, future: F) -> Result<()>
     where
         F: Future<Item = (), Error = ()> + Send + 'static,

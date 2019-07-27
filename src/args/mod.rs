@@ -2,14 +2,14 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "Boomslang", rename_all = "kebab_case")]
+#[structopt(name = "Cerberus", rename_all = "kebab_case")]
 pub struct Args {
     /// Config file to load
     #[structopt(
         short,
         long,
         help = "Config file location",
-        default_value = "/etc/boomslang.yml"
+        default_value = "/etc/cerberus.yml"
     )]
     pub config: PathBuf,
 
@@ -25,7 +25,7 @@ pub struct Args {
 #[derive(Debug, StructOpt)]
 #[structopt(name = "command", rename_all = "kebab_case")]
 pub enum Command {
-    /// Start Boomslang (default)
+    /// Start Cerberus (default)
     Run,
 }
 

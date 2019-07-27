@@ -16,7 +16,7 @@ mod runtime;
 use args::Args;
 use config::Builder;
 use prelude::*;
-use runtime::BOOMSLANG;
+use runtime::CERBERUS;
 
 fn main() -> Result<()> {
     let args = Args::new();
@@ -27,11 +27,11 @@ fn main() -> Result<()> {
     };
 
     for logger in config.loggers.build().into_iter() {
-        BOOMSLANG.register_logger(logger)?;
+        CERBERUS.register_logger(logger)?;
     }
 
     for agent in config.agents.build().into_iter() {
-        BOOMSLANG.run(agent)?;
+        CERBERUS.run(agent)?;
     }
-    BOOMSLANG.start()
+    CERBERUS.start()
 }

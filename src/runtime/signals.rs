@@ -1,8 +1,8 @@
-use super::Boomslang;
+use super::Cerberus;
 use crate::prelude::*;
 use signal_hook::{iterator::Signals, SIGINT, SIGQUIT, SIGTERM};
 
-impl Boomslang {
+impl Cerberus {
     pub fn add_signal_hooks(&self) -> Result<()> {
         self.wait(
             Signals::new(&[SIGINT, SIGTERM, SIGQUIT])?
