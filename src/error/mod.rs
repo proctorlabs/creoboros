@@ -20,6 +20,14 @@ impl From<std::io::Error> for AppError {
     }
 }
 
+impl From<crossbeam_channel::RecvError> for AppError {
+    fn from(src: crossbeam_channel::RecvError) -> AppError {
+        AppError::Critical {
+            message: format!("Failed to receive message on a channel!\n{:?}", src),
+        }
+    }
+}
+
 impl From<serde_yaml::Error> for AppError {
     fn from(src: serde_yaml::Error) -> AppError {
         AppError::Critical {

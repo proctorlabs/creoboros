@@ -43,10 +43,9 @@ macro_rules! log {
     ($level:ident : $l:literal [ $($args:tt)* ] $( $key:ident : $val:expr ),* => $( $logger:tt )* ) => {
         {
             let log_log = format!($l, $( $args )* );
-            println!("{}", log_log);
             $( let $key = $val.to_string(); )*
             let logger_name = $( $logger )* .to_owned();
-            async_std::task::spawn(async move {
+            task::spawn(async move {
                 let logger = crate::runtime::CERBERUS.get_logger(&logger_name);
                 if let Some(l) = logger {
                     let mut log: std::collections::BTreeMap<unstructured::Document, unstructured::Document> = std::collections::BTreeMap::new();

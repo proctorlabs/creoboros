@@ -18,6 +18,7 @@ impl_module! {
 }
 
 impl Logger {
+    #[allow(unreachable_code)]
     pub fn init(&self) -> Result<()> {
         for_match!(self: Logger [Stdout, File] |inner| (
             let receiver = inner.receiver.clone();
@@ -26,9 +27,10 @@ impl Logger {
                 {
                     task::spawn(async move {
                         loop {
-                            let m = receiver.recv().unwrap();
-                            inner.log(m).unwrap_or_default();
+                            let m = receiver.recv()?;
+                            inner.log(m)?;
                         }
+                        Ok::<(), AppError>(())
                     });
                 }
             )

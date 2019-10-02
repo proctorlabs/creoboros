@@ -7,7 +7,6 @@ use std::process::{Command, Stdio};
 
 impl RunnableAgent for Arc<super::Service> {
     fn execute(&self) -> Result<()> {
-        println!("boop");
         let mut child = Command::new(self.command.clone())
             .args(self.args.clone())
             .stdin(Stdio::null())
@@ -38,7 +37,7 @@ impl RunnableAgent for Arc<super::Service> {
             .into_raw_fd();
 
         capture!(self:slf {
-            async_std::task::spawn(async move {
+            task::spawn(async move {
                 let f = unsafe { File::from_raw_fd(stdout) };
                 let mut buf = BufReader::new(f);
                 loop {
@@ -47,16 +46,16 @@ impl RunnableAgent for Arc<super::Service> {
                     if let Ok(c) = res {
                         if c > 0 {
                             info!("{}" [&line] agent: slf.name => slf.logger);
+                            continue
                         }
-                    } else {
-                        break
                     }
+                    break
                 }
             });
         });
 
         capture!(self:slf {
-            async_std::task::spawn(async move {
+            task::spawn(async move {
                 let f = unsafe { File::from_raw_fd(stderr) };
                 let mut buf = BufReader::new(f);
                 loop {
@@ -65,23 +64,23 @@ impl RunnableAgent for Arc<super::Service> {
                     if let Ok(c) = res {
                         if c > 0 {
                             warn!("{}" [&line] agent: slf.name => slf.logger);
+                            continue
                         }
-                    } else {
-                        break
                     }
+                    break
                 }
             });
         });
 
         capture!(self:slf1, self:slf3 {
-            async_std::task::spawn(async move {
-                let status = child.wait().unwrap();
+            task::spawn(async move {
+                let status = child.wait()?;
                 warn!("Process exited with status: {}" [status] agent: slf1.name, reason: status => slf1.logger);
                 match slf1.policy {
                     Policy::Restart{delay} => {
                         info!("Attempting to restart process in {} seconds..."[delay] agent: slf1.name => slf1.logger);
-                        async_std::task::spawn(async move {
-                            async_std::task::sleep(Duration::from_secs(delay)).await;
+                        task::spawn(async move {
+                            task::sleep(Duration::from_secs(delay)).await;
                             slf3.execute()
                         });
                     }
@@ -89,6 +88,7 @@ impl RunnableAgent for Arc<super::Service> {
                         info!("Process exited, 'nothing' policy implies no action taken");
                     }
                 }
+                Ok::<(), AppError>(())
             });
         });
         Ok(())

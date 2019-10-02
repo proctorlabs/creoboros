@@ -13,15 +13,15 @@ agents:
       action: restart
       delay: 1
     command: "echo"
-    args: ["Hey!"]
+    args: ["-n", "Hey!"]
 
   "Dead in 60 seconds":
     type: script
     shell: /bin/bash
     script: |
-      echo "I started"
+      echo -n "I started"
       sleep 60
-      echo "Boom! I died." > /dev/stderr
+      echo -n "Boom! I died." > /dev/stderr
 
   "Timer Interval":
     logger: file

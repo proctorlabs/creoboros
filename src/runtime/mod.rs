@@ -9,14 +9,6 @@ mod signals;
 
 lazy_static! {
     pub static ref CERBERUS: Cerberus = {
-        // use crossbeam_channel::*;
-        // let (_, r) = unbounded::<Message>();
-        // async_std::task::spawn(async move {
-        //     loop {
-        //         let m = r.recv().unwrap();
-        //         info!("Master received message {:?}"[m]);
-        //     }
-        // });
         Cerberus {
             loggers: Default::default(),
             agents: Default::default(),
