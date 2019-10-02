@@ -1,10 +1,9 @@
 use crate::prelude::*;
 use crate::runtime::Message;
 use parking_lot::Mutex;
+use std::fs::File as TFile;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::mpsc::*;
-use tokio::fs::File as TFile;
 
 mod file;
 mod stdout;
@@ -21,18 +20,19 @@ impl_module! {
 impl Logger {
     pub fn init(&self) -> Result<()> {
         for_match!(self: Logger [Stdout, File] |inner| (
-            let receiver = inner.receiver.lock().take().ok_or_else(|| Critical { message: "Can only be initialized once!".into() })?;
+            let receiver = inner.receiver.clone();
             self.send(Init);
             capture!(inner:inner
                 {
-                    spawn!(
-                        receiver.for_each(move |m: Message| {
+                    task::spawn(async move {
+                        loop {
+                            let m = receiver.recv().unwrap();
                             inner.log(m).unwrap_or_default();
-                            Ok(())
-                        })
-                    )
+                        }
+                    });
                 }
             )
-        ))
+        ));
+        Ok(())
     }
 }

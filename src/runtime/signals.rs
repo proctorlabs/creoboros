@@ -4,12 +4,12 @@ use signal_hook::{iterator::Signals, SIGINT, SIGQUIT, SIGTERM};
 
 impl Cerberus {
     pub fn add_signal_hooks(&self) -> Result<()> {
-        self.wait(
-            Signals::new(&[SIGINT, SIGTERM, SIGQUIT])?
-                .into_async()?
-                .into_future()
-                .map(|_| info!("Signal received! Shutting down..." agent: "master"))
-                .map_err(|e| warn!("{}"[e.0] agent: "master")),
-        )
+        let signals = Signals::new(&[SIGINT, SIGTERM, SIGQUIT])?;
+        for s in signals.wait() {
+            if s == SIGTERM || s == SIGINT || s == SIGQUIT {
+                break;
+            }
+        }
+        Ok(())
     }
 }

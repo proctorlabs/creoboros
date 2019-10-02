@@ -1,7 +1,6 @@
 use super::*;
 use std::fs::OpenOptions;
 use std::io::Write;
-use tokio::fs::File as TFile;
 
 impl File {
     fn init(&self) {
@@ -11,7 +10,7 @@ impl File {
             .open(self.path.clone())
             .unwrap();
         let mut flock = self.file.lock();
-        *flock = Some(TFile::from_std(file));
+        *flock = Some(file);
         info!("Logger initialized!" logger: self.name => self.name)
     }
 }

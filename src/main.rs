@@ -19,19 +19,21 @@ use prelude::*;
 use runtime::CERBERUS;
 
 fn main() -> Result<()> {
-    let args = Args::new();
+    task::block_on(async {
+        let args = Args::new();
 
-    let config = match args.inline {
-        None => config::BaseConfig::load_file(args.config)?,
-        Some(s) => config::BaseConfig::load_str(&s)?,
-    };
+        let config = match args.inline {
+            None => config::BaseConfig::load_file(args.config)?,
+            Some(s) => config::BaseConfig::load_str(&s)?,
+        };
 
-    for logger in config.loggers.build().into_iter() {
-        CERBERUS.register_logger(logger)?;
-    }
+        for logger in config.loggers.build().into_iter() {
+            CERBERUS.register_logger(logger)?;
+        }
 
-    for agent in config.agents.build().into_iter() {
-        CERBERUS.run(agent)?;
-    }
-    CERBERUS.start()
+        for agent in config.agents.build().into_iter() {
+            CERBERUS.run(agent)?;
+        }
+        CERBERUS.start()
+    })
 }

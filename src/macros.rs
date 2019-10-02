@@ -1,10 +1,3 @@
-macro_rules! spawn {
-    ($to_spawn:expr) => {{
-        let spawnable: Spawnable = Box::new($to_spawn.into_future().map(|_| ()).map_err(|_| ()));
-        crate::runtime::CERBERUS.spawn(spawnable)
-    }};
-}
-
 macro_rules! for_match {
     ($eenum:ident : $type:ident [ $($name:ident),* ] $out:ident $e:block ) => {
         match $eenum {
@@ -50,9 +43,10 @@ macro_rules! log {
     ($level:ident : $l:literal [ $($args:tt)* ] $( $key:ident : $val:expr ),* => $( $logger:tt )* ) => {
         {
             let log_log = format!($l, $( $args )* );
+            println!("{}", log_log);
             $( let $key = $val.to_string(); )*
             let logger_name = $( $logger )* .to_owned();
-            spawn!(lazy(move || {
+            async_std::task::spawn(async move {
                 let logger = crate::runtime::CERBERUS.get_logger(&logger_name);
                 if let Some(l) = logger {
                     let mut log: std::collections::BTreeMap<unstructured::Document, unstructured::Document> = std::collections::BTreeMap::new();
@@ -65,7 +59,7 @@ macro_rules! log {
                     crate::loggers::Stdout::write(&log_log, stringify!($level));
                 }
                 Ok::<(), crate::error::AppError>(())
-            })).unwrap_or_else(|_| crate::loggers::Stdout::write("Critical log failure!", "CRIT"));
+            });
         }
     };
 }
@@ -98,10 +92,10 @@ macro_rules! impl_module {
 
             $(
                 pub fn $maker(name: String, $($argname: $argtype , )*) -> Self {
-                    let (sender, receiver) = unbounded_channel();
+                    let (sender, receiver) = crossbeam_channel::unbounded();
                     $module_name::$name(Arc::new($name{
                         name,
-                        receiver: Mutex::new(Some(receiver)),
+                        receiver: receiver,
                         sender,
                         $($argname , )*
                     }))
@@ -151,8 +145,8 @@ macro_rules! impl_module {
             #[derive(Debug)]
             pub struct $name{
                 pub name: String,
-                pub sender: UnboundedSender<Message>,
-                pub receiver: Mutex<Option<UnboundedReceiver<Message>>>,
+                pub sender: crossbeam_channel::Sender<Message>,
+                pub receiver: crossbeam_channel::Receiver<Message>,
                 $(pub $argname: $argtype , )*
             }
         )*
