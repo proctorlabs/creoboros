@@ -28,6 +28,14 @@ impl From<crossbeam_channel::RecvError> for AppError {
     }
 }
 
+impl From<crossbeam_channel::SendError<crate::runtime::Message>> for AppError {
+    fn from(src: crossbeam_channel::SendError<crate::runtime::Message>) -> AppError {
+        AppError::Critical {
+            message: format!("Failed to send message on a channel!\n{:?}", src),
+        }
+    }
+}
+
 impl From<serde_yaml::Error> for AppError {
     fn from(src: serde_yaml::Error) -> AppError {
         AppError::Critical {

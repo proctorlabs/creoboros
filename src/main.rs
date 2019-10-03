@@ -5,11 +5,10 @@ extern crate lazy_static;
 #[macro_use]
 mod macros;
 
-mod agents;
 mod args;
 mod config;
 mod error;
-mod loggers;
+mod modules;
 mod prelude;
 mod runtime;
 
@@ -28,11 +27,11 @@ fn main() -> Result<()> {
         };
 
         for logger in config.loggers.build().into_iter() {
-            CERBERUS.register_logger(logger)?;
+            CERBERUS.register(logger)?;
         }
 
         for agent in config.agents.build().into_iter() {
-            CERBERUS.run(agent)?;
+            CERBERUS.register(agent)?;
         }
         CERBERUS.start()
     })

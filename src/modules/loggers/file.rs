@@ -1,9 +1,29 @@
 use super::*;
+
+use parking_lot::Mutex;
+use std::fs::File as StdFile;
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::path::PathBuf;
+
+pub struct File {
+    name: String,
+    path: PathBuf,
+    file: Mutex<Option<StdFile>>,
+}
 
 impl File {
-    fn init(&self) -> Result<()> {
+    pub fn new(name: String, path: PathBuf) -> Self {
+        File {
+            name,
+            path,
+            file: Default::default(),
+        }
+    }
+}
+
+impl ModuleExt for File {
+    fn initialize(&self, _: &Sender<Message>) -> Result<()> {
         let file = OpenOptions::new()
             .append(true)
             .create(true)
@@ -13,10 +33,11 @@ impl File {
         info!("Logger initialized!" logger: self.name => self.name);
         Ok(())
     }
-}
+    fn name(&self) -> String {
+        self.name.clone()
+    }
 
-impl LoggerSink for File {
-    fn log(&self, m: Message) -> Result<()> {
+    fn handle(&self, m: Message) -> Result<()> {
         match m {
             Log { log } => {
                 let mut w = Vec::new();
@@ -29,9 +50,7 @@ impl LoggerSink for File {
                     warn!("No handle available to write to file!" logger: self.name);
                 }
             }
-            Init => {
-                self.init()?;
-            }
+            Init => {}
         };
         Ok(())
     }

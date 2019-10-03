@@ -1,7 +1,5 @@
-use crate::agents::Agent;
-use crate::loggers::Logger;
+use crate::modules::*;
 use crate::prelude::*;
-use parking_lot::Mutex;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -27,7 +25,7 @@ pub struct BaseConfig {
     pub agents: HashMap<String, AgentConfig>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "action")]
 pub enum Policy {
@@ -99,19 +97,19 @@ impl BaseConfig {
     }
 }
 
-impl Builder<Vec<Logger>> for HashMap<String, LoggerConfig> {
-    fn build(self) -> Vec<Logger> {
+impl Builder<Vec<Box<dyn DynamicModule>>> for HashMap<String, LoggerConfig> {
+    fn build(self) -> Vec<Box<dyn DynamicModule>> {
         self.into_iter()
             .map(|(n, c)| match c {
-                LoggerConfig::Stdout => Logger::stdout(n),
-                LoggerConfig::File { path } => Logger::file(n, path, Mutex::new(None)),
+                LoggerConfig::Stdout => Module::<Stdout>::from(Stdout::new(n)).into(),
+                LoggerConfig::File { path } => Module::<File>::from(File::new(n, path)).into(),
             })
             .collect()
     }
 }
 
-impl Builder<Vec<Agent>> for HashMap<String, AgentConfig> {
-    fn build(self) -> Vec<Agent> {
+impl Builder<Vec<Box<dyn DynamicModule>>> for HashMap<String, AgentConfig> {
+    fn build(self) -> Vec<Box<dyn DynamicModule>> {
         self.into_iter()
             .map(|(n, c)| match c {
                 AgentConfig::Exec {
@@ -119,14 +117,23 @@ impl Builder<Vec<Agent>> for HashMap<String, AgentConfig> {
                     args,
                     logger,
                     policy,
-                } => Agent::service(n, command, args, logger, policy),
+                } => Module::<Process>::from(Process::new(n, command, args, logger, policy)).into(),
                 AgentConfig::Script {
                     shell,
                     script,
                     logger,
                     policy,
-                } => Agent::service(n, shell, vec!["-c".into(), script], logger, policy),
-                AgentConfig::Timer { interval, logger } => Agent::timer(n, interval, logger),
+                } => Module::<Process>::from(Process::new(
+                    n,
+                    shell,
+                    vec!["-c".into(), script],
+                    logger,
+                    policy,
+                ))
+                .into(),
+                AgentConfig::Timer { interval, logger } => {
+                    Module::<Timer>::from(Timer::new(n, interval, logger)).into()
+                }
             })
             .collect()
     }
