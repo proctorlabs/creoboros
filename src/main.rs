@@ -5,12 +5,14 @@ extern crate lazy_static;
 #[macro_use]
 mod macros;
 
+mod actions;
 mod args;
 mod config;
 mod error;
 mod modules;
 mod prelude;
 mod runtime;
+mod templates;
 
 use args::Args;
 use config::Builder;
@@ -26,6 +28,12 @@ fn main() -> Result<()> {
             Some(s) => config::BaseConfig::load_str(&s)?,
         };
 
+        templates::context_set_value(&config.vars)?;
+
+        for action in config.actions.build().into_iter() {
+            CERBERUS.register_action(action)?;
+        }
+
         for logger in config.loggers.build().into_iter() {
             CERBERUS.register(logger)?;
         }
@@ -33,6 +41,7 @@ fn main() -> Result<()> {
         for agent in config.agents.build().into_iter() {
             CERBERUS.register(agent)?;
         }
+
         CERBERUS.start()
     })
 }

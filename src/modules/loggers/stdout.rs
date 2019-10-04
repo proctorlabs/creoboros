@@ -27,7 +27,7 @@ impl ModuleExt for Stdout {
     fn handle(&self, m: Message) -> Result<()> {
         match m {
             Log { log } => Stdout::write(&log["log"].to_string(), &log["level"].to_string()),
-            Init => info!("Logger initialized!" logger: self.name => self.name),
+            Unit => info!("Log test..." logger: self.name => self.name),
         };
         Ok(())
     }

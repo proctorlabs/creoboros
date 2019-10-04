@@ -50,7 +50,7 @@ impl ModuleExt for File {
                     warn!("No handle available to write to file!" logger: self.name);
                 }
             }
-            Init => {}
+            Unit => {}
         };
         Ok(())
     }

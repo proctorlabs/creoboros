@@ -16,17 +16,6 @@ pub struct Args {
     /// Inline configuration
     #[structopt(long, env = "INIT_YAML", help = "Inline YAML configuration")]
     pub inline: Option<String>,
-
-    /// Operation mode
-    #[structopt(subcommand)]
-    pub command: Option<Command>,
-}
-
-#[derive(Debug, StructOpt)]
-#[structopt(name = "command", rename_all = "kebab_case")]
-pub enum Command {
-    /// Start Cerberus (default)
-    Run,
 }
 
 impl Args {

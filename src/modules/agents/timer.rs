@@ -27,7 +27,7 @@ impl ModuleExt for Timer {
         let interval = self.interval;
         let s = sender.clone();
         task::spawn(async move {
-            while let Ok(_) = s.send(Message::Init) {
+            while let Ok(_) = s.send(Message::Unit) {
                 task::sleep(interval).await;
             }
         });

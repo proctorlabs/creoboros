@@ -1,5 +1,6 @@
 use super::*;
 use crate::config::Policy;
+use crate::templates::ConfigTemplate;
 use async_std::fs::File;
 use async_std::io::BufReader;
 use async_std::os::unix::io::*;
@@ -10,8 +11,8 @@ use std::time::Duration;
 #[derive(Debug, Clone)]
 pub struct Process {
     name: String,
-    command: String,
-    args: Vec<String>,
+    command: ConfigTemplate,
+    args: Vec<ConfigTemplate>,
     logger: String,
     policy: Policy,
 }
@@ -19,8 +20,8 @@ pub struct Process {
 impl Process {
     pub fn new(
         name: String,
-        command: String,
-        args: Vec<String>,
+        command: ConfigTemplate,
+        args: Vec<ConfigTemplate>,
         logger: String,
         policy: Policy,
     ) -> Self {
@@ -44,8 +45,13 @@ impl ModuleExt for Process {
     }
 
     fn initialize(&self, sender: &Sender<Message>) -> Result<()> {
-        let mut child = Command::new(self.command.clone())
-            .args(self.args.clone())
+        let args: Vec<String> = self
+            .args
+            .iter()
+            .map(|e| Ok(e.render()?))
+            .collect::<Result<Vec<String>>>()?;
+        let mut child = Command::new(self.command.render()?)
+            .args(args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -82,7 +88,7 @@ impl ModuleExt for Process {
                 let res = buf.read_line(&mut line).await;
                 if let Ok(c) = res {
                     if c > 0 {
-                        info!("{}" [&line] agent: md.0 => md.1);
+                        info!("{}" [line.trim()] agent: md.0 => md.1);
                         continue;
                     }
                 }
@@ -99,7 +105,7 @@ impl ModuleExt for Process {
                 let res = buf.read_line(&mut line).await;
                 if let Ok(c) = res {
                     if c > 0 {
-                        warn!("{}" [&line] agent: md.0 => md.1);
+                        warn!("{}" [line.trim()] agent: md.0 => md.1);
                         continue;
                     }
                 }

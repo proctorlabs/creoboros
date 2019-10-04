@@ -20,6 +20,7 @@ serde_json = "1.0"
 serde_yaml = "0.8"
 serde-humanize-rs = "0.1"
 unstructured = "0.3"
+templar = "0.1"
 
 # Async
 async-std = "0.99"

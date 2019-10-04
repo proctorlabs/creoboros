@@ -1,10 +1,10 @@
 use crate::prelude::*;
-pub use agents::*;
-pub use loggers::*;
-use std::sync::Arc;
 
 mod agents;
 mod loggers;
+
+pub use agents::*;
+pub use loggers::*;
 
 pub trait ModuleExt: Send + Sync {
     #[inline]
