@@ -1,7 +1,7 @@
 use unstructured::Document;
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum Message {
-    Log { log: Document },
     Unit,
+    Log { log: Document },
 }

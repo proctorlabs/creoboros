@@ -1,15 +1,19 @@
 use crate::prelude::*;
+use std::fmt::Debug;
 
+mod file_template;
 mod run;
 
+pub use file_template::FileTemplate;
 pub use run::Run;
 
-pub trait ActionImpl: Send + Sync {
+pub trait ActionImpl: Send + Sync + Debug {
     fn execute(&self, logger: String) -> Result<()>;
     fn name(&self) -> String;
 }
 
-pub struct Action(Box<dyn ActionImpl + Send + Sync>);
+#[derive(From, Debug, Clone)]
+pub struct Action(Arc<dyn ActionImpl + Send + Sync>);
 
 impl Action {
     pub fn execute(&self, logger: String) -> Result<()> {
@@ -23,6 +27,6 @@ impl Action {
 
 impl<T: 'static + ActionImpl> From<T> for Action {
     fn from(a: T) -> Self {
-        Action(Box::new(a))
+        Action(Arc::new(a))
     }
 }

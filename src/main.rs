@@ -1,6 +1,13 @@
 #![recursion_limit = "128"]
+
 #[macro_use]
 extern crate lazy_static;
+
+#[macro_use]
+extern crate derive_more;
+
+#[macro_use]
+extern crate derive_new;
 
 #[macro_use]
 mod macros;
@@ -9,6 +16,7 @@ mod actions;
 mod args;
 mod config;
 mod error;
+mod format;
 mod modules;
 mod prelude;
 mod runtime;
@@ -30,15 +38,11 @@ fn main() -> Result<()> {
 
         templates::context_set_value(&config.vars)?;
 
-        for action in config.actions.build().into_iter() {
+        for action in config.actions.build()?.into_iter() {
             CERBERUS.register_action(action)?;
         }
 
-        for logger in config.loggers.build().into_iter() {
-            CERBERUS.register(logger)?;
-        }
-
-        for agent in config.agents.build().into_iter() {
+        for agent in config.modules.build()?.into_iter() {
             CERBERUS.register(agent)?;
         }
 

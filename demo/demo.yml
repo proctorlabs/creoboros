@@ -1,0 +1,50 @@
+vars:
+  user: "{{ env('USER') }}"
+
+actions:
+  timer_interval:
+    script: echo Hello Action
+  template_file:
+    template: demo/demo.tpl
+    target: demo/demo.out
+
+modules:
+  # nginx:
+  #   command: "nginx"
+  #   args: ["-g", "daemon off;"]
+
+  "Greet and die immediately":
+    command: "echo"
+    args: ["Hello {{ user }}!"]
+    logger: parse_logs
+    policy:
+      action: restart
+      delay: 8
+
+  "Dead in 60 seconds":
+    script: |
+      echo "I started"
+      sleep 60
+      echo "Boom! I died." > /dev/stderr
+    shell: /bin/bash
+
+  "Timer Interval":
+    timer: timer_interval
+    logger: File Logger
+    interval: "5s"
+
+  "Template Interval":
+    timer: template_file
+    interval: "5s"
+
+  "File Logger":
+    path: demo/demo.log
+    format: json
+
+  parse_logs:
+    pattern: "Hello (?P<user>.*)!"
+    forward_to: default_logger
+
+  default_logger:
+    console: stdout
+    format: json

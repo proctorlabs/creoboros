@@ -57,8 +57,17 @@ impl From<serde_yaml::Error> for AppError {
         }
     }
 }
+
 impl From<templar::error::TemplarError> for AppError {
     fn from(src: templar::error::TemplarError) -> AppError {
+        AppError::Critical {
+            message: format!("{}", src),
+        }
+    }
+}
+
+impl From<regex::Error> for AppError {
+    fn from(src: regex::Error) -> AppError {
         AppError::Critical {
             message: format!("{}", src),
         }

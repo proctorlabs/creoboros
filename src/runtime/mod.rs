@@ -1,4 +1,5 @@
 use crate::actions::*;
+use crate::format::Formatters;
 use crate::modules::*;
 use crate::prelude::*;
 use crossbeam_channel::{unbounded, Sender};
@@ -12,10 +13,11 @@ mod signals;
 type DelegatedMessage = (String, Message);
 
 lazy_static! {
-    pub static ref STDOUT: Stdout = Stdout::new("default".into());
+    pub static ref CONSOLE: Console = Console::new("default_logger".into(), Formatters::default());
     pub static ref CERBERUS: Cerberus = Cerberus::new();
 }
 
+#[derive(Debug)]
 pub struct Cerberus {
     modules: Mutex<HashMap<String, Box<dyn DynamicModule>>>,
     actions: Mutex<HashMap<String, Action>>,
@@ -29,13 +31,13 @@ impl Cerberus {
             while let Ok((target, msg)) = r.recv() {
                 if let Some(m) = CERBERUS.modules.lock().get(&target) {
                     m.send(msg).unwrap_or_else(|_| {
-                        Stdout::write(
-                            &format!("Could not write to the specified target {}", target),
-                            "CRIT",
-                        );
+                        CONSOLE.log(&format!(
+                            "Could not write to the specified target {}",
+                            target
+                        ));
                     });
                 } else {
-                    STDOUT.handle(msg).unwrap_or_default();
+                    CONSOLE.handle(msg).unwrap_or_default();
                 }
             }
         });
@@ -58,6 +60,20 @@ impl Cerberus {
         let mut map = self.actions.lock();
         map.insert(action.name(), action);
         Ok(())
+    }
+
+    pub fn execute(&self, logger: String, action: String) -> Result<()> {
+        let map = self.actions.lock();
+        let action = map.get(&action).cloned();
+        drop(map);
+        if let Some(action) = action {
+            action.execute(logger)?;
+            Ok(())
+        } else {
+            Err(Critical {
+                message: "Attempted to execute non-existant action!".into(),
+            })
+        }
     }
 
     pub fn send(&self, target: &str, message: Message) {

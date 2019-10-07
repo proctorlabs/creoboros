@@ -2,20 +2,11 @@ use super::*;
 
 use std::process::Command;
 
+#[derive(new, Default, Debug)]
 pub struct Run {
     name: String,
     command: ConfigTemplate,
     args: Vec<ConfigTemplate>,
-}
-
-impl Run {
-    pub fn new(name: String, command: ConfigTemplate, args: Vec<ConfigTemplate>) -> Self {
-        Run {
-            name,
-            command,
-            args,
-        }
-    }
 }
 
 impl ActionImpl for Run {

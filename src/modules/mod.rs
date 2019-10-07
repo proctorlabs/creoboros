@@ -6,7 +6,9 @@ mod loggers;
 pub use agents::*;
 pub use loggers::*;
 
-pub trait ModuleExt: Send + Sync {
+use std::fmt::Debug;
+
+pub trait ModuleExt: Send + Sync + Debug {
     #[inline]
     fn initialize(&self, _: &Sender<Message>) -> Result<()> {
         Ok(())
@@ -17,7 +19,7 @@ pub trait ModuleExt: Send + Sync {
     fn handle(&self, message: Message) -> Result<()>;
 }
 
-pub trait DynamicModule: Send + Sync {
+pub trait DynamicModule: Send + Sync + Debug {
     fn name(&self) -> String;
     fn send(&self, message: Message) -> Result<()>;
     fn initialize(&self) -> Result<()>;
@@ -41,7 +43,6 @@ impl<T: 'static + ModuleExt> DynamicModule for Module<T> {
         Ok(self.sender.send(message)?)
     }
 
-    #[inline]
     fn initialize(&self) -> Result<()> {
         self.module.initialize(&self.sender)?;
         let receiver = self.receiver.clone();

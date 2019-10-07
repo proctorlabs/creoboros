@@ -2,20 +2,12 @@ use super::*;
 
 use std::time::Duration;
 
+#[derive(Debug, new)]
 pub struct Timer {
     name: String,
     interval: Duration,
     logger: String,
-}
-
-impl Timer {
-    pub fn new(name: String, interval: Duration, logger: String) -> Self {
-        Timer {
-            name,
-            interval,
-            logger,
-        }
-    }
+    actions: Vec<String>,
 }
 
 impl ModuleExt for Timer {
@@ -35,7 +27,9 @@ impl ModuleExt for Timer {
     }
 
     fn handle(&self, _: Message) -> Result<()> {
-        info!("Timer event occurred" agent: self.name => self.logger);
+        for action in self.actions.iter() {
+            crate::CERBERUS.execute(self.logger.clone(), action.to_string())?;
+        }
         Ok(())
     }
 }
