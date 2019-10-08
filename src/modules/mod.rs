@@ -6,64 +6,80 @@ mod loggers;
 pub use agents::*;
 pub use loggers::*;
 
+use async_std::sync::RwLock;
 use std::fmt::Debug;
 
 pub trait ModuleExt: Send + Sync + Debug {
     #[inline]
-    fn initialize(&self, _: &Sender<Message>) -> Result<()> {
+    fn initialize(&mut self, _: &Sender<Message>) -> Result<()> {
         Ok(())
     }
 
     fn name(&self) -> String;
 
-    fn handle(&self, message: Message) -> Result<()>;
+    fn handle(&self, _: Message) -> Result<()> {
+        Ok(())
+    }
+
+    fn priority(&self) -> u16 {
+        100
+    }
 }
 
 pub trait DynamicModule: Send + Sync + Debug {
     fn name(&self) -> String;
     fn send(&self, message: Message) -> Result<()>;
-    fn initialize(&self) -> Result<()>;
+    fn initialize(&mut self) -> Result<()>;
+    fn priority(&self) -> u16;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Module<T: ModuleExt> {
-    module: Arc<T>,
+    module: Arc<RwLock<T>>,
     sender: Sender<Message>,
-    receiver: Receiver<Message>,
+    receiver: Option<Receiver<Message>>,
 }
 
 impl<T: 'static + ModuleExt> DynamicModule for Module<T> {
     #[inline]
     fn name(&self) -> String {
-        self.module.name()
+        task::block_on(async { self.module.read().await.name() })
     }
 
     #[inline]
     fn send(&self, message: Message) -> Result<()> {
-        Ok(self.sender.send(message)?)
+        self.sender.unbounded_send(message).unwrap_or_default();
+        Ok(())
     }
 
-    fn initialize(&self) -> Result<()> {
-        self.module.initialize(&self.sender)?;
-        let receiver = self.receiver.clone();
-        let module = self.module.clone();
-        task::spawn(async move {
-            while let Ok(message) = receiver.recv() {
-                module.handle(message)?;
+    fn initialize(&mut self) -> Result<()> {
+        task::block_on(async {
+            self.module.write().await.initialize(&self.sender)?;
+            let module = self.module.clone();
+            if let Some(mut receiver) = self.receiver.take() {
+                task::spawn(async move {
+                    while let Some(message) = receiver.next().await {
+                        module.read().await.handle(message)?;
+                    }
+                    Ok::<(), AppError>(())
+                });
             }
-            Ok::<(), AppError>(())
-        });
-        Ok(())
+            Ok(())
+        })
+    }
+
+    fn priority(&self) -> u16 {
+        task::block_on(async { self.module.read().await.priority() })
     }
 }
 
 impl<T: ModuleExt> From<T> for Module<T> {
     fn from(module: T) -> Self {
-        let (sender, receiver) = crossbeam_channel::unbounded();
+        let (sender, receiver) = futures_channel::mpsc::unbounded();
         let result: Module<T> = Module {
-            module: Arc::new(module),
+            module: Arc::new(RwLock::new(module)),
             sender,
-            receiver,
+            receiver: Some(receiver),
         };
         result
     }

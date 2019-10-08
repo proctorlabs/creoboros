@@ -28,7 +28,7 @@ use prelude::*;
 use runtime::CERBERUS;
 
 fn main() -> Result<()> {
-    task::block_on(async {
+    let res = task::block_on(async {
         let args = Args::new();
 
         let config = match args.inline {
@@ -39,13 +39,19 @@ fn main() -> Result<()> {
         templates::context_set_value(&config.vars)?;
 
         for action in config.actions.build()?.into_iter() {
-            CERBERUS.register_action(action)?;
+            CERBERUS.register_action(action).await?;
         }
 
         for agent in config.modules.build()?.into_iter() {
-            CERBERUS.register(agent)?;
+            CERBERUS.register(agent).await?;
         }
 
         CERBERUS.start()
-    })
+    });
+    if let Err(e) = res {
+        eprintln!("Failure executing!");
+        eprintln!("{}", e);
+        std::process::exit(1);
+    }
+    Ok(())
 }

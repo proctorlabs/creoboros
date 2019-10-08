@@ -8,7 +8,7 @@ pub trait Formatter {
     fn format(&self, log: Document) -> String;
 }
 
-#[derive(Debug, From)]
+#[derive(Debug, From, Clone)]
 pub enum Formatters {
     Plain(Plain),
     Standard(Standard),

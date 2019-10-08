@@ -3,15 +3,16 @@ vars:
 
 actions:
   timer_interval:
-    script: echo Hello Action
+    script: |
+      echo Hello Action!
+      nginx -s reload
   template_file:
-    template: demo/demo.tpl
-    target: demo/demo.out
+    template: demo/nginx.tpl
+    target: /etc/nginx/nginx.conf
 
 modules:
-  # nginx:
-  #   command: "nginx"
-  #   args: ["-g", "daemon off;"]
+  "Startup Sequence":
+    start: template_file
 
   "Greet and die immediately":
     command: "echo"
@@ -31,10 +32,6 @@ modules:
   "Timer Interval":
     timer: timer_interval
     logger: File Logger
-    interval: "5s"
-
-  "Template Interval":
-    timer: template_file
     interval: "5s"
 
   "File Logger":

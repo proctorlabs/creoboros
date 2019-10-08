@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Plain;
 
 impl Formatter for Plain {
@@ -9,21 +9,27 @@ impl Formatter for Plain {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Standard;
 
 impl Formatter for Standard {
     fn format(&self, log: Document) -> String {
+        let agent_str = if log["agent"].is_string() {
+            format!(" [{}]", log["agent"])
+        } else {
+            "".into()
+        };
         format!(
-            "{} |{:<4}|: {}",
+            "{} |{:<4}|{}: {}",
             chrono::Local::now().format("%H:%M:%S.%3f"),
             &log["level"],
+            agent_str,
             &log["log"]
         )
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Json;
 
 impl Formatter for Json {

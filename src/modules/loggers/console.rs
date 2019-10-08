@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, new)]
+#[derive(Debug, Clone, new)]
 pub struct Console {
     name: String,
     formatter: Formatters,
@@ -26,5 +26,9 @@ impl ModuleExt for Console {
             Unit => info!("Log test..." logger: self.name => self.name),
         };
         Ok(())
+    }
+
+    fn priority(&self) -> u16 {
+        0
     }
 }

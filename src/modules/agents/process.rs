@@ -26,7 +26,7 @@ impl ModuleExt for Process {
         Ok(())
     }
 
-    fn initialize(&self, sender: &Sender<Message>) -> Result<()> {
+    fn initialize(&mut self, sender: &Sender<Message>) -> Result<()> {
         let args = self
             .args
             .iter()
@@ -52,7 +52,7 @@ impl ModuleExt for Process {
             move |s| warn!("{}" [s.trim()] agent: md.0 => md.1),
         )?;
 
-        let md = (
+        let mut md = (
             self.name.clone(),
             self.logger.clone(),
             sender.clone(),

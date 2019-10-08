@@ -1,0 +1,32 @@
+vars:
+  user: "{{ env('USER') }}"
+
+actions:
+  configure_nginx:
+    template: demo/nginx.tpl
+    target: /etc/nginx/nginx.conf
+  curl_test:
+    script: |
+      curl -s localhost > /dev/null
+
+modules:
+  "Startup Sequence":
+    start: configure_nginx
+
+  "Timer Interval":
+    timer: curl_test
+    logger: File Logger
+    interval: "5s"
+
+  nginx:
+    command: "nginx"
+    args: ["-g", "daemon off;"]
+    logger: Parse Logs
+
+  "Parse Logs":
+    built_in_pattern: nginx
+    forward_to: default_logger
+
+  default_logger:
+    console: stdout
+    format: json

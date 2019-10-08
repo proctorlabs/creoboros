@@ -2,9 +2,9 @@ use crate::actions::*;
 use crate::format::Formatters;
 use crate::modules::*;
 use crate::prelude::*;
-use crossbeam_channel::{unbounded, Sender};
+use async_std::sync::Mutex;
+use futures_channel::mpsc::unbounded;
 pub use message::{Message, Message::*};
-use parking_lot::Mutex;
 use std::collections::HashMap;
 
 mod message;
@@ -26,10 +26,10 @@ pub struct Cerberus {
 
 impl Cerberus {
     fn new() -> Self {
-        let (sender, r) = unbounded::<DelegatedMessage>();
+        let (sender, mut r) = unbounded::<DelegatedMessage>();
         task::spawn(async move {
-            while let Ok((target, msg)) = r.recv() {
-                if let Some(m) = CERBERUS.modules.lock().get(&target) {
+            while let Some((target, msg)) = r.next().await {
+                if let Some(m) = CERBERUS.modules.lock().await.get(&target) {
                     m.send(msg).unwrap_or_else(|_| {
                         CONSOLE.log(&format!(
                             "Could not write to the specified target {}",
@@ -48,37 +48,50 @@ impl Cerberus {
         }
     }
 
-    pub fn register<T: Into<Box<dyn DynamicModule>>>(&self, module: T) -> Result<()> {
-        let m: Box<dyn DynamicModule> = module.into();
+    pub async fn register<T: Into<Box<dyn DynamicModule>>>(&self, module: T) -> Result<()> {
+        let mut m: Box<dyn DynamicModule> = module.into();
+        let name = m.name();
+        info!("Initializing agent {}"[name] agent: name);
         m.initialize()?;
-        let mut map = self.modules.lock();
+        let mut map = self.modules.lock().await;
         map.insert(m.name(), m);
+        drop(map);
+        info!("Agent {} fully initialized!"[name] agent: name);
         Ok(())
     }
 
-    pub fn register_action(&self, action: Action) -> Result<()> {
-        let mut map = self.actions.lock();
+    pub async fn register_action(&self, action: Action) -> Result<()> {
+        let mut map = self.actions.lock().await;
         map.insert(action.name(), action);
         Ok(())
     }
 
-    pub fn execute(&self, logger: String, action: String) -> Result<()> {
-        let map = self.actions.lock();
-        let action = map.get(&action).cloned();
-        drop(map);
-        if let Some(action) = action {
-            action.execute(logger)?;
-            Ok(())
+    pub async fn execute(&self, logger: String, action: String) -> Result<()> {
+        let out = logger.clone();
+        info!("Executing action '{}'..."[action] => out);
+        let res = {
+            let map = self.actions.lock().await;
+            let action = map.get(&action).cloned();
+            drop(map);
+            if let Some(action) = action {
+                action.execute(logger)
+            } else {
+                Err(Critical {
+                    message: "Attempted to execute non-existant action!".into(),
+                })
+            }
+        };
+        if let Err(e) = &res {
+            warn!("Failed to execute action! {}"[e] => out);
         } else {
-            Err(Critical {
-                message: "Attempted to execute non-existant action!".into(),
-            })
+            info!("Execution of action '{}' complete"[action] => out);
         }
+        res
     }
 
     pub fn send(&self, target: &str, message: Message) {
         self.sender
-            .send((target.into(), message))
+            .unbounded_send((target.into(), message))
             .unwrap_or_default();
     }
 

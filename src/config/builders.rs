@@ -11,7 +11,7 @@ pub trait Builder<T> {
 
 impl Builder<Vec<Action>> for HashMap<String, ActionConfig> {
     fn build(self) -> Result<Vec<Action>> {
-        Ok(self
+        let result = self
             .into_iter()
             .map(|(n, c)| match c {
                 ActionConfig::Run { script, shell } => {
@@ -20,8 +20,10 @@ impl Builder<Vec<Action>> for HashMap<String, ActionConfig> {
                 ActionConfig::FileTemplate { template, target } => {
                     FileTemplate::new(n, template, target).into()
                 }
+                ActionConfig::Action { action } => ActionAction::new(n, action.get()).into(),
             })
-            .collect())
+            .collect::<Vec<Action>>();
+        Ok(result)
     }
 }
 
@@ -35,9 +37,22 @@ impl Builder<Formatters> for OutputFormat {
     }
 }
 
+const NGINX: &str = r#"(?P<remote_ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[(?P<nginx_timestamp>\d{2}/[a-zA-Z]{3}/\d{4}:\d{2}:\d{2}:\d{2} (\+|\-)\d{4})\] (("(GET|POST) )(?P<url>.+) (HTTP/1\.1")) (?P<status_code>\d{3}) (?P<bytes_sent>\d+) (["](?P<referer>(\-)|(.+))["]) (["](?P<useragent>.+)["])"#;
+
+impl Builder<String> for ParserFormat {
+    fn build(self) -> Result<String> {
+        match self {
+            Self::Pattern { pattern } => Ok(pattern),
+            Self::BuiltIn {
+                built_in_pattern: BuiltInParserFormat::Nginx,
+            } => Ok(NGINX.into()),
+        }
+    }
+}
+
 impl Builder<Vec<Box<dyn DynamicModule>>> for HashMap<String, ModuleConfig> {
     fn build(self) -> Result<Vec<Box<dyn DynamicModule>>> {
-        Ok(self
+        let mut result = self
             .into_iter()
             .map(|(n, c)| {
                 Ok(match c {
@@ -81,10 +96,20 @@ impl Builder<Vec<Box<dyn DynamicModule>>> for HashMap<String, ModuleConfig> {
                     ModuleConfig::RegexParser {
                         pattern,
                         forward_to,
-                    } => Module::<RegexParser>::from(RegexParser::new(n, pattern, forward_to)?)
-                        .into(),
+                    } => Module::<RegexParser>::from(RegexParser::new(
+                        n,
+                        pattern.build()?,
+                        forward_to,
+                    )?)
+                    .into(),
+                    ModuleConfig::Start { start, logger } => {
+                        Module::<Start>::from(Start::new(n, logger, start.get())).into()
+                    }
                 })
             })
-            .collect::<Result<Vec<Box<dyn DynamicModule>>>>()?)
+            .collect::<Result<Vec<Box<dyn DynamicModule>>>>()?;
+
+        result.sort_unstable_by_key(|k| k.priority());
+        Ok(result)
     }
 }

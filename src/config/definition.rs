@@ -46,6 +46,9 @@ pub enum ActionConfig {
         template: PathBuf,
         target: PathBuf,
     },
+    Action {
+        action: OneOrMany<String>,
+    },
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -81,7 +84,8 @@ pub enum ModuleConfig {
     },
 
     RegexParser {
-        pattern: String,
+        #[serde(flatten)]
+        pattern: ParserFormat,
         forward_to: String,
     },
 
@@ -95,6 +99,12 @@ pub enum ModuleConfig {
         console: ConsoleOutput,
         #[serde(default)]
         format: OutputFormat,
+    },
+
+    Start {
+        start: OneOrMany<String>,
+        #[serde(default = "default_logger")]
+        logger: String,
     },
 }
 
@@ -111,6 +121,23 @@ pub enum OutputFormat {
     Standard,
     Plain,
     Json,
+}
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
+#[serde(untagged)]
+pub enum ParserFormat {
+    Pattern {
+        pattern: String,
+    },
+    BuiltIn {
+        built_in_pattern: BuiltInParserFormat,
+    },
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum BuiltInParserFormat {
+    Nginx,
 }
 
 impl Default for OutputFormat {

@@ -1,6 +1,6 @@
 use super::*;
 
-use parking_lot::Mutex;
+use async_std::sync::Mutex;
 use std::fs::File as StdFile;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -16,35 +16,44 @@ pub struct File {
 }
 
 impl ModuleExt for File {
-    fn initialize(&self, _: &Sender<Message>) -> Result<()> {
-        let file = OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(self.path.clone())?;
-        let mut flock = self.file.lock();
-        *flock = Some(file);
-        info!("Logger initialized!" logger: self.name => self.name);
-        Ok(())
+    fn initialize(&mut self, _: &Sender<Message>) -> Result<()> {
+        task::block_on(async {
+            let file = OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(self.path.clone())?;
+            let mut flock = self.file.lock().await;
+            *flock = Some(file);
+            info!("Logger initialized!" logger: self.name => self.name);
+            Ok(())
+        })
     }
+
     fn name(&self) -> String {
         self.name.clone()
     }
 
     fn handle(&self, m: Message) -> Result<()> {
-        match m {
-            Log { log } => {
-                let mut w = Vec::new();
-                let msg = self.formatter.format(log);
-                writeln!(w, "{}", msg).unwrap_or_default();
-                let mut file = self.file.lock();
-                if let Some(f) = &mut *file {
-                    f.write_all(&w)?;
-                } else {
-                    warn!("No handle available to write to file!" logger: self.name);
+        task::block_on(async {
+            match m {
+                Log { log } => {
+                    let mut w = Vec::new();
+                    let msg = self.formatter.format(log);
+                    writeln!(w, "{}", msg).unwrap_or_default();
+                    let mut file = self.file.lock().await;
+                    if let Some(f) = &mut *file {
+                        f.write_all(&w)?;
+                    } else {
+                        warn!("No handle available to write to file!" logger: self.name);
+                    }
                 }
-            }
-            Unit => {}
-        };
-        Ok(())
+                Unit => {}
+            };
+            Ok(())
+        })
+    }
+
+    fn priority(&self) -> u16 {
+        1
     }
 }

@@ -12,13 +12,13 @@ macro_rules! warn {
 
 macro_rules! log {
     ($level:ident : $l:literal $( $key:ident : $val:expr ),* ) => {
-        log!($level : $l [] $( $key : $val ),* => "default" )
+        log!($level : $l [] $( $key : $val ),* => "default_logger" )
     };
     ($level:ident : $l:literal $( $key:ident : $val:expr ),* => $( $logger:tt )* ) => {
         log!($level : $l [] $( $key : $val ),* => $( $logger )* )
     };
     ($level:ident : $l:literal [ $($args:tt)* ] $( $key:ident : $val:expr ),* ) => {
-        log!($level : $l [ $( $args )* ] $( $key : $val ),* => "default" )
+        log!($level : $l [ $( $args )* ] $( $key : $val ),* => "default_logger" )
     };
     ($level:ident : $l:literal [ $($args:tt)* ] $( $key:ident : $val:expr ),* => $( $logger:tt )* ) => {
         {

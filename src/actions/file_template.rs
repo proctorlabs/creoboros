@@ -23,7 +23,7 @@ impl ActionImpl for FileTemplate {
         let mut target = OpenOptions::new()
             .write(true)
             .mode(0o644)
-            .create_new(true)
+            .truncate(true)
             .open(&self.target)?;
         write!(target, "{}", result)?;
         Ok(())
