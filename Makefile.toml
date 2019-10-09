@@ -124,6 +124,7 @@ fi
 dependencies = ["validate"]
 
 [tasks.publish-crate]
+toolchain = "beta"
 condition = { env_true = ["PUBLISH_CRATE"] }
 description = "Publish crate"
 command = "cargo"
