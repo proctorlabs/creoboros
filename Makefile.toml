@@ -8,6 +8,7 @@ BUILD_ARGS = "--target-dir ${BUILD_DIR}"
 DOCKER_BUILD_IMAGE = "proctorlabs/rust-builder"
 OUTPUT_DIR = "${BUILD_DIR}/debug/"
 PACKAGE_DIR = "target/packages/"
+RUSTUP_TOOLCHAIN = "beta-x86_64-unknown-linux-gnu"
 
 [env.libc]
 BUILD_TAR = true
@@ -29,17 +30,25 @@ PACKAGE_BASENAME = "${BIN_NAME}-${BIN_VERSION}-${PACKAGE_SUFFIX}"
 BUILD_ARGS = "--target ${RUST_TARGET} --release"
 OUTPUT_DIR = "${BUILD_DIR}/${RUST_TARGET}/release/"
 
+[config]
+toolchain = "beta"
+
+[tasks.init]
+install_script = [
+    "rustup toolchain install beta",
+    "rustup default beta"
+]
+
+[tasks.recurse]
+script = ["cargo make ${@}"]
+
 # ---- Development ----
 [tasks.build]
-install_script = ["rustup toolchain install beta"]
-toolchain = "beta"
 description = "Build project"
 command = "cargo"
 args = ["build", "--all-targets", "@@split(BUILD_ARGS, )"]
 
 [tasks.run]
-install_script = ["rustup toolchain install beta"]
-toolchain = "beta"
 description = "Run project"
 command = "cargo"
 args = ["run", "@@split(BUILD_ARGS, )", "--", "-c", "demo/demo.yml", "${@}"]
@@ -124,7 +133,6 @@ fi
 dependencies = ["validate"]
 
 [tasks.publish-crate]
-toolchain = "beta"
 condition = { env_true = ["PUBLISH_CRATE"] }
 description = "Publish crate"
 command = "cargo"
