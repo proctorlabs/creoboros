@@ -5,14 +5,10 @@ actions:
   timer_interval:
     script: |
       echo Hello Action!
-      nginx -s reload
-  template_file:
-    template: demo/nginx.tpl
-    target: /etc/nginx/nginx.conf
 
 modules:
   "Startup Sequence":
-    start: template_file
+    start: timer_interval
 
   "Greet and die immediately":
     command: "echo"

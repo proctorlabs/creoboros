@@ -1,6 +1,7 @@
 /target
 **/*.rs.bk
 .vscode
+.cargo
 
 demo.log
 demo.out
