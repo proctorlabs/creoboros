@@ -8,13 +8,14 @@ BUILD_ARGS = "--target-dir ${BUILD_DIR}"
 DOCKER_BUILD_IMAGE = "proctorlabs/rust-builder"
 OUTPUT_DIR = "${BUILD_DIR}/debug/"
 PACKAGE_DIR = "target/packages/"
-RUSTUP_TOOLCHAIN = "beta-x86_64-unknown-linux-gnu"
+RUST_CHANNEL = "beta"
+RUST_TARGET = "x86_64-unknown-linux-gnu"
+RUSTUP_TOOLCHAIN = "${RUST_CHANNEL}-x86_64-unknown-linux-gnu"
 
 [env.libc]
 BUILD_TAR = true
 BUILD_DEB = true
-PUBLISH_CRATE = false
-RUST_TARGET = "x86_64-unknown-linux-gnu"
+PUBLISH_CRATE = true
 PACKAGE_SUFFIX = "amd64-libc"
 PACKAGE_BASENAME = "${BIN_NAME}-${BIN_VERSION}-${PACKAGE_SUFFIX}"
 BUILD_ARGS = "--target ${RUST_TARGET} --release"
@@ -35,9 +36,9 @@ toolchain = "beta"
 
 [tasks.init]
 install_script = [
-    "rustup toolchain install beta",
-    "rustup default beta",
-    "rustup target add x86_64-unknown-linux-musl"
+    "rustup toolchain install ${RUST_CHANNEL}",
+    "rustup default ${RUST_CHANNEL}",
+    "rustup target add ${RUST_TARGET}"
 ]
 
 # ---- Development ----
