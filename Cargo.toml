@@ -1,10 +1,10 @@
 [package]
-name = "cerberus"
+name = "creoboros"
 description = "A docker process manager"
 version = "0.1.0"
 authors = ["Phil Proctor <philliptproctor@gmail.com>"]
 edition = "2018"
-documentation = "https://docs.rs/cerberus"
+documentation = "https://docs.rs/creoboros"
 repository = "https://github.com/proctorlabs/cerberus"
 keywords = []
 categories = []
@@ -14,7 +14,7 @@ exclude = [".github/**"]
 
 [package.metadata.deb]
 maintainer = "Phil Proctor <philliptproctor@gmail.com>"
-copyright = "2019, cerberus development team"
+copyright = "2019, creoboros development team"
 license-file = ["LICENSE", "5"]
 extended-description = "A docker process manager"
 depends = "$auto"

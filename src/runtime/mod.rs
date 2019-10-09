@@ -14,22 +14,22 @@ type DelegatedMessage = (String, Message);
 
 lazy_static! {
     pub static ref CONSOLE: Console = Console::new("default_logger".into(), Formatters::default());
-    pub static ref CERBERUS: Cerberus = Cerberus::new();
+    pub static ref RT: Creoboros = Creoboros::new();
 }
 
 #[derive(Debug)]
-pub struct Cerberus {
+pub struct Creoboros {
     modules: Mutex<HashMap<String, Box<dyn DynamicModule>>>,
     actions: Mutex<HashMap<String, Action>>,
     sender: Sender<DelegatedMessage>,
 }
 
-impl Cerberus {
+impl Creoboros {
     fn new() -> Self {
         let (sender, mut r) = unbounded::<DelegatedMessage>();
         task::spawn(async move {
             while let Some((target, msg)) = r.next().await {
-                if let Some(m) = CERBERUS.modules.lock().await.get(&target) {
+                if let Some(m) = RT.modules.lock().await.get(&target) {
                     m.send(msg).unwrap_or_else(|_| {
                         CONSOLE.log(&format!(
                             "Could not write to the specified target {}",
@@ -41,7 +41,7 @@ impl Cerberus {
                 }
             }
         });
-        Cerberus {
+        Creoboros {
             modules: Default::default(),
             actions: Default::default(),
             sender,

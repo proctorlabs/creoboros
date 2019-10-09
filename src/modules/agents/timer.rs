@@ -29,7 +29,7 @@ impl ModuleExt for Timer {
     fn handle(&self, _: Message) -> Result<()> {
         task::block_on(async {
             for action in self.actions.iter() {
-                crate::CERBERUS
+                crate::RT
                     .execute(self.logger.clone(), action.to_string())
                     .await?;
             }

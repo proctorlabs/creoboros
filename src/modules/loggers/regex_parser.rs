@@ -38,7 +38,7 @@ impl ModuleExt for RegexParser {
                 }
             }
         }
-        CERBERUS.send(&self.forward_to, m);
+        RT.send(&self.forward_to, m);
         Ok(())
     }
 

@@ -2,14 +2,14 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "Cerberus", rename_all = "kebab_case")]
+#[structopt(name = "Creoboros", rename_all = "kebab_case")]
 pub struct Args {
     /// Config file to load
     #[structopt(
         short,
         long,
         help = "Config file location",
-        default_value = "/etc/cerberus.yml"
+        default_value = "/etc/creoboros.yml"
     )]
     pub config: PathBuf,
 

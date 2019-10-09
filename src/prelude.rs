@@ -2,7 +2,7 @@ pub use crate::{
     error::{AppError::*, *},
     runtime::{
         Message::{self, *},
-        CERBERUS,
+        RT,
     },
     templates::{ConfigExpression, ConfigTemplate},
 };

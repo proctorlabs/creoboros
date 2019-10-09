@@ -25,7 +25,7 @@ mod templates;
 use args::Args;
 use config::Builder;
 use prelude::*;
-use runtime::CERBERUS;
+use runtime::RT;
 
 fn main() -> Result<()> {
     let res = task::block_on(async {
@@ -39,14 +39,14 @@ fn main() -> Result<()> {
         templates::context_set_value(&config.vars)?;
 
         for action in config.actions.build()?.into_iter() {
-            CERBERUS.register_action(action).await?;
+            RT.register_action(action).await?;
         }
 
         for agent in config.modules.build()?.into_iter() {
-            CERBERUS.register(agent).await?;
+            RT.register(agent).await?;
         }
 
-        CERBERUS.start()
+        RT.start()
     });
     if let Err(e) = res {
         eprintln!("Failure executing!");

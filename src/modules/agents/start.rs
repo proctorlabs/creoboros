@@ -15,7 +15,7 @@ impl ModuleExt for Start {
     fn initialize(&mut self, _: &Sender<Message>) -> Result<()> {
         task::block_on(async {
             for action in self.actions.iter() {
-                crate::CERBERUS
+                crate::RT
                     .execute(self.logger.clone(), action.to_string())
                     .await?;
             }

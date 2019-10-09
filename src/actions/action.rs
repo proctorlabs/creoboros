@@ -9,7 +9,7 @@ pub struct ActionAction {
 impl ActionImpl for ActionAction {
     fn execute(&self, logger: String) -> Result<()> {
         for action in &self.actions {
-            task::block_on(CERBERUS.execute(logger.clone(), action.clone()))?;
+            task::block_on(RT.execute(logger.clone(), action.clone()))?;
         }
         Ok(())
     }

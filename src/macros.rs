@@ -31,7 +31,7 @@ macro_rules! log {
                     log.insert("log".into(), log_log.into());
                     log.insert("level".into(), stringify!($level).into());
                     $( log.insert(stringify!($key).into(), $key.into()); )*
-                    crate::runtime::CERBERUS.send(&logger_name, crate::runtime::Message::Log { log: log.into() });
+                    crate::runtime::RT.send(&logger_name, crate::runtime::Message::Log { log: log.into() });
                 Ok::<(), crate::error::AppError>(())
             });
         }
