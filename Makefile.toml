@@ -36,11 +36,9 @@ toolchain = "beta"
 [tasks.init]
 install_script = [
     "rustup toolchain install beta",
-    "rustup default beta"
+    "rustup default beta",
+    "rustup target add x86_64-unknown-linux-musl"
 ]
-
-[tasks.recurse]
-script = ["cargo make ${@}"]
 
 # ---- Development ----
 [tasks.build]
